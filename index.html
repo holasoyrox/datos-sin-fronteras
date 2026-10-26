@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datos sin fronteras</title>
+<meta name="description" content="Cómo tomar datos del Banco Mundial y visualizarlos. Caso de estudio: obesidad en adultos, 1990–2022.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Media Party 2026 · Feria de proyectos</p>
+    <h1>Datos sin fronteras</h1>
+    <p class="lede">Cómo tomar datos abiertos del Banco Mundial y convertirlos en una historia.
+      Caso de estudio: <strong>obesidad en adultos, 1990–2022</strong>.</p>
+    <div class="hero-stat" id="hero-stat" aria-live="polite"></div>
+  </div>
+</header>
+
+<nav class="picker" aria-label="Elegir país">
+  <div class="wrap picker-inner">
+    <label for="pais">Elegí un país</label>
+    <select id="pais"></select>
+    <span class="picker-hint">o tocá uno en el mapa</span>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section id="mundo">
+    <p class="step">1 · El mundo</p>
+    <h2>La obesidad casi se triplicó en tres décadas</h2>
+    <p class="intro">Porcentaje de adultos con obesidad en cada país. Mové el año o tocá ▶ para ver la película completa.</p>
+    <div class="map-controls">
+      <button id="play" class="play" aria-label="Reproducir">▶</button>
+      <input id="anio" type="range" min="1990" max="2022" step="1" value="2022" aria-label="Año">
+      <output id="anio-label" for="anio">2022</output>
+    </div>
+    <div id="viz-mapa" class="viz viz-map"></div>
+    <p class="note">Los países muy pequeños (islas del Pacífico y el Caribe, entre otros) no se ven en este mapa, pero sí están en los gráficos de abajo.</p>
+  </section>
+
+  <section id="regiones">
+    <p class="step">2 · Las regiones</p>
+    <h2 id="titulo-regiones">Todas las regiones suben</h2>
+    <p class="intro">Promedio de cada región del Banco Mundial, ponderado por población.</p>
+    <div class="legend" id="legend-regiones"></div>
+    <div id="viz-regiones" class="viz"></div>
+  </section>
+
+  <section id="ingreso">
+    <p class="step">3 · Ingreso y obesidad</p>
+    <h2>Más ingreso, más obesidad… pero no siempre</h2>
+    <p class="intro">Cada círculo es un país en 2022. Más a la derecha, más PBI per cápita (escala logarítmica); el tamaño indica la población.</p>
+    <div class="legend" id="legend-ingreso"></div>
+    <div id="viz-ingreso" class="viz"></div>
+  </section>
+
+  <section id="cambio">
+    <p class="step">4 · Quién cambió más</p>
+    <h2>Los 15 países donde más subió</h2>
+    <p class="intro">Diferencia entre 1990 y 2022, en puntos porcentuales. No es lo mismo pasar de 5% a 15% que de 25% a 35%: por eso mostramos el punto de partida y el de llegada.</p>
+    <div class="toggle" role="group" aria-label="Alcance del ranking">
+      <button data-scope="mundo" class="on">Todo el mundo</button>
+      <button data-scope="region" id="scope-region">Su región</button>
+    </div>
+    <div class="legend" id="legend-cambio"></div>
+    <div id="viz-cambio" class="viz"></div>
+  </section>
+
+  <section id="pais-zoom">
+    <p class="step">5 · Un país</p>
+    <h2 id="titulo-pais"></h2>
+    <div class="kpis" id="kpis"></div>
+    <div class="legend" id="legend-pais"></div>
+    <div id="viz-pais" class="viz"></div>
+    <details class="tabla">
+      <summary>Ver los datos en una tabla</summary>
+      <div id="tabla-pais"></div>
+    </details>
+  </section>
+
+  <section id="como" class="como">
+    <p class="step">6 · Cómo se hace</p>
+    <h2>Esto sirve para cualquier tema</h2>
+    <p class="intro">La base de datos del Banco Mundial tiene más de 160 bases y miles de indicadores. Lo que hicimos con obesidad se repite igual con cualquier otro tema: cambiás una palabra y obtenés otra historia.</p>
+
+    <div class="chips" id="chips" role="group" aria-label="Probar otro tema">
+      <span class="chips-label">Probá con:</span>
+    </div>
+
+    <ol class="pasos">
+      <li>
+        <h3>Buscar el indicador</h3>
+        <p>La API Data360 permite buscar en todo el catálogo por palabra clave.</p>
+<pre><code id="code-buscar"></code></pre>
+      </li>
+      <li>
+        <h3>Traer la serie completa</h3>
+        <p>Todos los países y todos los años. La API devuelve hasta 1000 filas por pedido, así que vamos paginando.</p>
+<pre><code id="code-traer"></code></pre>
+      </li>
+      <li>
+        <h3>Visualizar</h3>
+        <p>En Python con Altair (como en este sitio, que usa Vega-Lite), en Observable o en QGIS: se cruza con el mapa usando el código ISO3 de cada país.</p>
+<pre><code>import altair as alt
+
+alt.Chart(df).mark_line().encode(
+    x="TIME_PERIOD:O",
+    y="OBS_VALUE:Q",
+    color="REF_AREA:N",
+)</code></pre>
+      </li>
+    </ol>
+
+    <div class="recursos">
+      <a href="https://github.com/holasoyrox/datos-sin-fronteras/blob/main/notebooks/TP_Final_InfoVis.ipynb">Notebook en Python ↗</a>
+      <a href="https://observablehq.com/@aaizemberg/explorando-la-api-del-world-bank">Explorando la API en Observable ↗</a>
+      <a href="https://observablehq.com/@aaizemberg/world-bank-data-map">Mapa del Banco Mundial en Observable ↗</a>
+      <a href="https://data360.worldbank.org/">World Bank Data360 ↗</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Fuente:</strong> Banco Mundial, Data360. Indicador <code>WB_HCP_OBESITY</code> (prevalencia de obesidad en adultos, %), PBI per cápita en US$ corrientes (<code>WB_GS_NY_GDP_PCAP_CD</code>) y población total (<code>WB_WDI_SP_POP_TOTL</code>).</p>
+    <p><strong>Método:</strong> los promedios regionales y mundiales están ponderados por población. Las regiones son las del Banco Mundial.</p>
+    <p>Trabajo final de la materia Visualización de la Información. <a href="https://github.com/holasoyrox/datos-sin-fronteras">Código en GitHub</a>.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

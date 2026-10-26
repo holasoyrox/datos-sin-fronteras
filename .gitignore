@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/
+# notebooks sueltos en la raíz (las versiones del repo viven en notebooks/)
+/*.ipynb
+*.csv
