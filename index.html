@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,6 +23,7 @@
     <p class="lede">Cómo tomar datos abiertos del Banco Mundial y convertirlos en una historia.
       Caso de estudio: <strong>obesidad en adultos, 1990–2022</strong>.</p>
     <div class="hero-stat" id="hero-stat" aria-live="polite"></div>
+    <p class="byline">Paula Farias y Rocío Sanchez Faris · Profesor: Ariel Aizemberg</p>
   </div>
 </header>
 
@@ -30,12 +32,25 @@
     <label for="pais">Elegí un país</label>
     <select id="pais"></select>
     <span class="picker-hint">o tocá uno en el mapa</span>
+    <button id="feria-on" class="feria-btn" title="Mapa en pantalla completa y en loop, para la pantalla de la mesa">⛶ Modo feria</button>
   </div>
 </nav>
 
 <main class="wrap">
 
   <section id="mundo">
+    <div class="feria-head feria-only">
+      <div>
+        <p class="kicker">Datos sin fronteras · Banco Mundial</p>
+        <h2>% de adultos con obesidad, 1990–2022</h2>
+        <p class="feria-sub">Paula Farias y Rocío Sanchez Faris · Prof. Ariel Aizemberg</p>
+      </div>
+      <div class="qr-box">
+        <div id="qr"></div>
+        <span>Exploralo en tu celular</span>
+      </div>
+      <button id="feria-off" class="feria-close" aria-label="Salir del modo feria">✕</button>
+    </div>
     <p class="step">1 · El mundo</p>
     <h2>La obesidad casi se triplicó en tres décadas</h2>
     <p class="intro">Porcentaje de adultos con obesidad en cada país. Mové el año o tocá ▶ para ver la película completa.</p>
@@ -135,6 +150,7 @@ alt.Chart(df).mark_line().encode(
   <div class="wrap">
     <p><strong>Fuente:</strong> Banco Mundial, Data360. Indicador <code>WB_HCP_OBESITY</code> (prevalencia de obesidad en adultos, %), PBI per cápita en US$ corrientes (<code>WB_GS_NY_GDP_PCAP_CD</code>) y población total (<code>WB_WDI_SP_POP_TOTL</code>).</p>
     <p><strong>Método:</strong> los promedios regionales y mundiales están ponderados por población. Las regiones son las del Banco Mundial.</p>
+    <p><strong>Equipo:</strong> Paula Farias y Rocío Sanchez Faris. <strong>Profesor:</strong> Ariel Aizemberg.</p>
     <p>Trabajo final de la materia Visualización de la Información. <a href="https://github.com/holasoyrox/datos-sin-fronteras">Código en GitHub</a>.</p>
   </div>
 </footer>

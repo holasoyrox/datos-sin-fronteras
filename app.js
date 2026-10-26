@@ -95,13 +95,19 @@ function rampa() {
   return oscuro() ? r.slice().reverse() : r;
 }
 
+function alturaMapa() {
+  const w = document.getElementById("viz-mapa").clientWidth;
+  if (document.body.classList.contains("feria")) return Math.max(320, innerHeight - 240);
+  return Math.min(440, Math.max(260, w * 0.46));
+}
+
 async function renderMapa() {
   const c = C();
   const valores = D.paises.map((p) => ({ iso3: p.iso3, nombre: p.nombre, o: p.obesidad }));
   const anio = +document.getElementById("anio").value;
   const res = await embed("#viz-mapa", {
     width: "container",
-    height: Math.min(520, Math.max(280, document.getElementById("viz-mapa").clientWidth * 0.5)),
+    height: alturaMapa(),
     autosize: { type: "fit", contains: "padding" },
     params: [{ name: "anio", value: anio }, { name: "pais", value: pais }],
     data: { url: "data/world.json", format: { type: "topojson", feature: "countries" } },
@@ -163,10 +169,46 @@ function togglePlay() {
   }, 280);
 }
 
+// ---------- Modo feria: mapa en pantalla completa, en loop ----------
+
+const URL_SITIO = "https://holasoyrox.github.io/datos-sin-fronteras/";
+let feriaTimer = null;
+
+function entrarFeria() {
+  if (timer) togglePlay();
+  document.body.classList.add("feria");
+  const qr = document.getElementById("qr");
+  if (!qr.hasChildNodes() && window.QRCode) {
+    new QRCode(qr, { text: URL_SITIO, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.M });
+  }
+  if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+  scrollTo(0, 0);
+  renderMapa().then(() => {
+    let a = ANIO_0;
+    let pausa = 0;
+    setAnio(a);
+    feriaTimer = setInterval(() => {
+      if (a >= ANIO_N) {          // se queda unos segundos en 2022 y vuelve a empezar
+        if (++pausa < 12) return;
+        pausa = 0; a = ANIO_0 - 1;
+      }
+      setAnio(++a);
+    }, 250);
+  });
+}
+
+function salirFeria() {
+  clearInterval(feriaTimer); feriaTimer = null;
+  document.body.classList.remove("feria");
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  setAnio(ANIO_N);
+  renderMapa();
+}
+
 // ---------- Gráfico de líneas reutilizable (con crosshair) ----------
 // series: [{nombre, valores, color, ancho, destacada, etiqueta}]
 
-function specLineas(series, { height = 380 } = {}) {
+function specLineas(series, { height = 300 } = {}) {
   const c = C();
   const data = series.flatMap((s) => serieLarga(s.nombre, s.valores).map((d) => ({
     ...d, color: s.color, ancho: s.ancho, destacada: !!s.destacada,
@@ -254,14 +296,14 @@ function renderIngreso() {
   const y = { field: "obesidad", type: "quantitative", title: "% de adultos con obesidad", scale: { domain: [0, 80] } };
   const sinPbi = !data.some((d) => d.grupo === "pais");
   return embed("#viz-ingreso", {
-    width: "container", height: 440,
+    width: "container", height: 360,
     data: { values: data },
     layer: [
       {
         mark: { type: "circle", stroke: c.surface, strokeWidth: 1 },
         encoding: {
           x, y,
-          size: { field: "pob", type: "quantitative", scale: { range: [20, 1600] }, legend: null },
+          size: { field: "pob", type: "quantitative", scale: { range: [15, 1200] }, legend: null },
           color: { field: "grupo", type: "nominal", scale: { domain: ["otro", "region", "pais"], range: [c.otro, c.region, c.pais] }, legend: null },
           opacity: { condition: { test: "datum.grupo === 'otro'", value: 0.7 }, value: 0.95 },
           order: { field: "orden" },
@@ -275,7 +317,7 @@ function renderIngreso() {
       },
       {
         transform: [{ filter: "datum.grupo === 'pais'" }],
-        mark: { type: "circle", size: 420, fillOpacity: 0, stroke: c.pais, strokeWidth: 2 },
+        mark: { type: "circle", size: 320, fillOpacity: 0, stroke: c.pais, strokeWidth: 2 },
         encoding: { x, y },
       },
       {
@@ -315,10 +357,10 @@ function renderCambio() {
     [p.nombre, c.pais, "dot"],
   ]);
   const y = { field: "nombre", type: "nominal", sort: { field: "delta", order: "descending" }, title: null,
-    axis: { labelLimit: 160, labelFontSize: 13, ticks: false, domain: false } };
+    axis: { labelLimit: 160, labelFontSize: 12, ticks: false, domain: false } };
   const x = { type: "quantitative", title: "% de adultos con obesidad", scale: { domain: [0, 80] } };
   return embed("#viz-cambio", {
-    width: "container", height: { step: 30 },
+    width: "container", height: { step: 24 },
     data: { values: top },
     encoding: { y },
     layer: [
@@ -377,7 +419,7 @@ function renderPais() {
     <thead><tr><th>Año</th><th>${p.nombre} (%)</th><th>${corto(p.region)} (%)</th><th>Mundo (%)</th></tr></thead>
     <tbody>${filas}</tbody></table></div>`;
 
-  return embed("#viz-pais", specLineas(series, { height: 360 }));
+  return embed("#viz-pais", specLineas(series, { height: 290 }));
 }
 
 // ---------- 6. Cómo se hace ----------
@@ -476,6 +518,14 @@ async function main() {
       renderCambio();
     };
   });
+
+  document.getElementById("feria-on").onclick = entrarFeria;
+  document.getElementById("feria-off").onclick = salirFeria;
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && feriaTimer) salirFeria(); });
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && feriaTimer) salirFeria();
+  });
+  if (new URLSearchParams(location.search).has("feria")) addEventListener("load", entrarFeria);
 
   renderChips();
   renderTodo();
