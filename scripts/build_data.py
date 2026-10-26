@@ -7,8 +7,9 @@ pero sin dependencias: solo librería estándar de Python.
     python3 scripts/build_data.py
 
 Genera:
-    data/obesidad.json  -> todo lo que necesita la web (países, series, promedios)
-    data/world.json     -> mapa del mundo (TopoJSON) con códigos ISO3
+    data/obesidad.json     -> la historia de obesidad (países, series, promedios)
+    data/indicadores.json  -> los temas del explorador (13 indicadores, 1990–2024)
+    data/world.json        -> mapa del mundo (TopoJSON) con códigos ISO3
 """
 
 import csv
@@ -24,10 +25,29 @@ V2_ROOT = "https://api.worldbank.org/v2"
 
 # Indicadores (los mismos que eligió el notebook)
 OBESIDAD = ("WB_HCP", "WB_HCP_OBESITY")       # Prevalence of obesity among adults (%)
-PBI_PC = ("WB_GS", "WB_GS_NY_GDP_PCAP_CD")    # GDP per capita (current US$)
+PBI_PC = ("WB_WDI", "WB_WDI_NY_GDP_PCAP_CD")  # GDP per capita (current US$)
 POBLACION = ("WB_WDI", "WB_WDI_SP_POP_TOTL")  # Population, total
 
 ANIO_DESDE, ANIO_HASTA = 1990, 2022
+EXPLORADOR_HASTA = 2024
+
+# Temas del explorador: (clave, base, indicador, decimales)
+# Los textos (nombre, unidad, descripción) viven en explorar.js
+INDICADORES = [
+    ("obes", "WB_HCP", "WB_HCP_OBESITY", 2),
+    ("life", "WB_WDI", "WB_WDI_SP_DYN_LE00_IN", 2),
+    ("imrt", "WB_WDI", "WB_WDI_SP_DYN_IMRT_IN", 1),
+    ("undn", "WB_WDI", "WB_WDI_SN_ITK_DEFC_ZS", 1),
+    ("gdp", "WB_WDI", "WB_WDI_NY_GDP_PCAP_CD", 0),
+    ("net", "WB_WDI", "WB_WDI_IT_NET_USER_ZS", 1),
+    ("elec", "WB_WDI", "WB_WDI_EG_ELC_ACCS_ZS", 1),
+    ("co2", "WB_WDI", "WB_WDI_EN_GHG_CO2_PC_CE_AR5", 2),
+    ("forest", "WB_WDI", "WB_WDI_AG_LND_FRST_ZS", 1),
+    ("fert", "WB_WDI", "WB_WDI_SP_DYN_TFRT_IN", 2),
+    ("urb", "WB_WDI", "WB_WDI_SP_URB_TOTL_IN_ZS", 1),
+    ("unemp", "WB_WDI", "WB_WDI_SL_UEM_TOTL_ZS", 1),
+    ("health", "WB_WDI", "WB_WDI_SH_XPD_CHEX_GD_ZS", 1),
+]
 
 WORLD_TOPO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json"
 ISO_CODES_URL = (
@@ -65,6 +85,7 @@ NOMBRES_CORTOS = {
     "SYR": "Siria",
     "VEN": "Venezuela",
     "TUR": "Turquía",
+    "NRU": "Nauru",
 }
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -104,7 +125,7 @@ def obtener_serie(database_id, indicator_id):
         time.sleep(0.2)
 
 
-def a_tabla(filas):
+def a_tabla(filas, hasta=ANIO_HASTA):
     """{ISO3: {anio: valor}} quedándonos con el total (sin desagregar por sexo/edad)
     y con el rango de años que nos interesa."""
     tabla = {}
@@ -115,7 +136,7 @@ def a_tabla(filas):
             anio, valor = int(f["TIME_PERIOD"]), float(f["OBS_VALUE"])
         except (TypeError, ValueError):
             continue
-        if ANIO_DESDE <= anio <= ANIO_HASTA:
+        if ANIO_DESDE <= anio <= hasta:
             tabla.setdefault(f["REF_AREA"], {})[anio] = valor
     return tabla
 
@@ -200,6 +221,26 @@ def main():
         "paises": salida_paises,
     }, ensure_ascii=False, separators=(",", ":")))
     print(f"data/obesidad.json: {len(salida_paises)} países, {len(anios)} años")
+
+    print("Temas del explorador...")
+    anios_x = list(range(ANIO_DESDE, EXPLORADOR_HASTA + 1))
+    pob_x = a_tabla(obtener_serie(*POBLACION), EXPLORADOR_HASTA)
+    temas = {"pop": {"id": POBLACION[1], "db": POBLACION[0],
+                     "data": {c: [pob_x[c].get(a) for a in anios_x] for c in pob_x if c in paises}}}
+    for clave, base, ind, dec in INDICADORES:
+        t = a_tabla(obtener_serie(base, ind), EXPLORADOR_HASTA)
+        temas[clave] = {"id": ind, "db": base, "data": {
+            c: [round(t[c][a], dec) if a in t[c] else None for a in anios_x]
+            for c in t if c in paises
+        }}
+        print(f"  {clave}: {len(temas[clave]['data'])} países")
+    (OUT / "indicadores.json").write_text(json.dumps({
+        "anios": anios_x,
+        "paises": [{"iso3": c, "nombre": NOMBRES_CORTOS.get(c) or es.get(c, paises[c]["nombre"]),
+                    "region": paises[c]["region"]} for c in sorted(paises)],
+        "temas": temas,
+    }, ensure_ascii=False, separators=(",", ":")).replace("NaN", "null"))
+    print("data/indicadores.json listo")
 
     print("Mapa del mundo...")
     topo = get_json(WORLD_TOPO_URL)

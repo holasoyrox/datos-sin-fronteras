@@ -1,5 +1,6 @@
 // Datos sin fronteras — gráficos con Vega-Lite
 // Los datos se generan con scripts/build_data.py (data/obesidad.json, data/world.json)
+// Pestañas: La historia (este archivo), Explorá otros temas (explorar.js), Cómo se hizo (como.js)
 
 const ANIO_0 = 1990;
 const ANIO_N = 2022;
@@ -64,8 +65,8 @@ function embed(el, spec) {
 const idx = (anio) => anio - ANIO_0;
 const P = () => porIso[pais];
 
-function serieLarga(nombre, valores) {
-  return valores.map((v, i) => ({ anio: ANIO_0 + i, serie: nombre, valor: v }));
+function serieLarga(nombre, valores, x0 = ANIO_0) {
+  return valores.map((v, i) => ({ anio: x0 + i, serie: nombre, valor: v })).filter((d) => d.valor != null);
 }
 
 function legend(el, items) {
@@ -101,13 +102,14 @@ function alturaMapa() {
   return Math.min(440, Math.max(260, w * 0.46));
 }
 
-async function renderMapa() {
+// Mapa genérico: valores = [{iso3, nombre, o: [valor por año desde x0]}]
+// fmt = expresión Vega para el tooltip (recibe datum.valor)
+function specMapa({ el, valores, x0, anio, domain, log = false, titulo, fmt, labelExpr, height }) {
   const c = C();
-  const valores = D.paises.map((p) => ({ iso3: p.iso3, nombre: p.nombre, o: p.obesidad }));
-  const anio = +document.getElementById("anio").value;
-  const res = await embed("#viz-mapa", {
+  const ancho = document.querySelector(el).clientWidth;
+  return {
     width: "container",
-    height: alturaMapa(),
+    height,
     autosize: { type: "fit", contains: "padding" },
     params: [{ name: "anio", value: anio }, { name: "pais", value: pais }],
     data: { url: "data/world.json", format: { type: "topojson", feature: "countries" } },
@@ -116,9 +118,9 @@ async function renderMapa() {
       { calculate: "datum.properties.iso3", as: "iso3" },
       { filter: "datum.iso3 !== 'ATA'" },
       { lookup: "iso3", from: { data: { values: valores }, key: "iso3", fields: ["nombre", "o"] } },
-      { calculate: "isValid(datum.o) ? datum.o[anio - 1990] : -1", as: "valor" },
+      { calculate: `isValid(datum.o) && isValid(datum.o[anio - ${x0}]) ? datum.o[anio - ${x0}] : -1`, as: "valor" },
       { calculate: "isValid(datum.nombre) ? datum.nombre : datum.properties.name", as: "País" },
-      { calculate: "datum.valor < 0 ? 'sin datos' : format(datum.valor, '.1f') + '%'", as: "Obesidad" },
+      { calculate: `datum.valor < 0 ? 'sin datos' : ${fmt}`, as: "Valor" },
       { calculate: "anio", as: "Año" },
     ],
     mark: { type: "geoshape", cursor: "pointer" },
@@ -126,23 +128,36 @@ async function renderMapa() {
       color: {
         condition: { test: "datum.valor < 0", value: c.missing },
         field: "valor", type: "quantitative",
-        scale: { domain: [0, 45], range: rampa(), clamp: true },
+        scale: { type: log ? "log" : "linear", domain, range: rampa(), clamp: true },
         legend: {
-          title: "% de adultos con obesidad", direction: "horizontal",
-          orient: document.getElementById("viz-mapa").clientWidth < 760 ? "bottom" : "bottom-left",
-          gradientLength: 220, labelExpr: "datum.value >= 45 ? '45+' : datum.value",
+          title: titulo, direction: "horizontal",
+          orient: ancho < 760 ? "bottom" : "bottom-left",
+          gradientLength: 220, labelExpr, tickCount: 5,
         },
       },
       stroke: { condition: { test: "datum.iso3 === pais", value: c.text }, value: c.surface },
       strokeWidth: { condition: { test: "datum.iso3 === pais", value: 2 }, value: 0.5 },
-      tooltip: [{ field: "País" }, { field: "Año" }, { field: "Obesidad" }],
+      tooltip: [{ field: "País" }, { field: "Año" }, { field: "Valor", title: titulo }],
     },
-  });
-  mapaView = res.view;
-  mapaView.addEventListener("click", (_, item) => {
+  };
+}
+
+function clickPais(view) {
+  view.addEventListener("click", (_, item) => {
     const iso = item && item.datum && item.datum.iso3;
-    if (iso && porIso[iso]) setPais(iso);
+    if (iso) setPais(iso);
   });
+}
+
+async function renderMapa() {
+  const valores = D.paises.map((p) => ({ iso3: p.iso3, nombre: p.nombre, o: p.obesidad }));
+  const res = await embed("#viz-mapa", specMapa({
+    el: "#viz-mapa", valores, x0: ANIO_0, anio: +document.getElementById("anio").value,
+    domain: [0, 45], titulo: "% de adultos con obesidad", height: alturaMapa(),
+    fmt: "format(datum.valor, '.1f') + '%'", labelExpr: "datum.value >= 45 ? '45+' : datum.value",
+  }));
+  mapaView = res.view;
+  clickPais(mapaView);
 }
 
 function setAnio(a) {
@@ -176,6 +191,7 @@ let feriaTimer = null;
 
 function entrarFeria() {
   if (timer) togglePlay();
+  mostrarTab("historia");
   document.body.classList.add("feria");
   const qr = document.getElementById("qr");
   if (!qr.hasChildNodes() && window.QRCode) {
@@ -208,18 +224,24 @@ function salirFeria() {
 // ---------- Gráfico de líneas reutilizable (con crosshair) ----------
 // series: [{nombre, valores, color, ancho, destacada, etiqueta}]
 
-function specLineas(series, { height = 300 } = {}) {
+function specLineas(series, {
+  height = 300, x0 = ANIO_0, x1 = ANIO_N, yTitle = "% de adultos con obesidad",
+  fmtV = (v) => `${fmt1(v)}%`, formatoTip = ".1f", yFormat = null, cero = true,
+} = {}) {
   const c = C();
-  const data = series.flatMap((s) => serieLarga(s.nombre, s.valores).map((d) => ({
+  const data = series.flatMap((s) => serieLarga(s.nombre, s.valores, x0).map((d) => ({
     ...d, color: s.color, ancho: s.ancho, destacada: !!s.destacada,
-    etiqueta: s.etiqueta ? `${s.etiqueta} ${fmt1(d.valor)}%` : null,
+    etiqueta: s.etiqueta ? `${s.etiqueta} ${fmtV(d.valor)}` : null,
   })));
   const nombres = series.map((s) => s.nombre);
-  const yMax = Math.ceil(Math.max(...data.map((d) => d.valor)) / 5) * 5;
+  // la etiqueta va en el último año con dato de cada serie
+  const ultimo = {};
+  data.forEach((d) => { if (!ultimo[d.serie] || d.anio > ultimo[d.serie]) ultimo[d.serie] = d.anio; });
+  data.forEach((d) => { d.fin = d.anio === ultimo[d.serie]; });
   const x = { field: "anio", type: "quantitative", title: null,
-    axis: { format: "d", tickCount: 6 }, scale: { domain: [ANIO_0, ANIO_N] } };
-  const y = { field: "valor", type: "quantitative", title: "% de adultos con obesidad",
-    scale: { domain: [0, yMax] }, axis: { tickCount: 5 } };
+    axis: { format: "d", tickCount: 6 }, scale: { domain: [x0, x1] } };
+  const y = { field: "valor", type: "quantitative", title: yTitle,
+    scale: { zero: cero, nice: true }, axis: { tickCount: 5, ...(yFormat ? { format: yFormat } : {}) } };
   const linea = (destacada) => ({
     transform: [{ filter: destacada ? "datum.destacada" : "!datum.destacada" }],
     mark: { type: "line", interpolate: "monotone", strokeCap: "round" },
@@ -244,7 +266,7 @@ function specLineas(series, { height = 300 } = {}) {
           x,
           opacity: { condition: { param: "hover", empty: false, value: 0.6 }, value: 0 },
           tooltip: [{ field: "anio", title: "Año" }].concat(
-            nombres.map((n) => ({ field: n, type: "quantitative", title: corto(n), format: ".1f" }))),
+            nombres.map((n) => ({ field: n, type: "quantitative", title: corto(n), format: formatoTip }))),
         },
       },
       {
@@ -253,7 +275,7 @@ function specLineas(series, { height = 300 } = {}) {
         encoding: { x, y, color: { field: "color", type: "nominal", scale: null } },
       },
       {
-        transform: [{ filter: `datum.anio === ${ANIO_N} && datum.etiqueta` }],
+        transform: [{ filter: "datum.fin && datum.etiqueta" }],
         mark: { type: "text", align: "right", dy: -12, fontWeight: 600 },
         encoding: { x, y, text: { field: "etiqueta" } },
       },
@@ -484,17 +506,46 @@ function renderDependientes() {
   return Promise.all([renderRegiones(), renderIngreso(), renderCambio(), renderPais()]);
 }
 
+// Las pestañas ocultas no tienen ancho, así que cada una se dibuja cuando se muestra
+let tabActual = "historia";
+const sucias = new Set(["historia", "explorar", "como"]);
+
+function renderTab(id) {
+  sucias.delete(id);
+  if (id === "historia") { renderMapa(); renderDependientes(); }
+  if (id === "explorar" && window.Explorar) Explorar.render();
+  if (id === "como" && window.Como) Como.render();
+}
+
+function mostrarTab(id) {
+  if (!document.getElementById(`tab-${id}`)) id = "historia";
+  tabActual = id;
+  document.querySelectorAll(".tab").forEach((t) => { t.hidden = t.id !== `tab-${id}`; });
+  document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === id));
+  if (location.hash.slice(1) !== id) history.replaceState(null, "", `#${id}`);
+  if (sucias.has(id)) renderTab(id);
+}
+
 function setPais(iso) {
+  if (!porIso[iso] && !(window.Explorar && Explorar.tienePais(iso))) return;
   pais = iso;
-  document.getElementById("pais").value = iso;
-  if (mapaView) mapaView.signal("pais", iso).runAsync();
-  renderDependientes();
+  const sel = document.getElementById("pais");
+  if (![...sel.options].some((o) => o.value === iso)) return;
+  sel.value = iso;
+  ["historia", "explorar", "como"].forEach((t) => sucias.add(t));
+  if (tabActual === "historia" && mapaView) {
+    sucias.delete("historia");
+    mapaView.signal("pais", iso).runAsync();
+    renderDependientes();
+  } else {
+    renderTab(tabActual);
+  }
 }
 
 function renderTodo() {
   renderHero();
-  renderMapa();
-  renderDependientes();
+  ["historia", "explorar", "como"].forEach((t) => sucias.add(t));
+  renderTab(tabActual);
 }
 
 async function main() {
@@ -527,8 +578,15 @@ async function main() {
   });
   if (new URLSearchParams(location.search).has("feria")) addEventListener("load", entrarFeria);
 
+  document.querySelectorAll(".tabs button").forEach((b) => {
+    b.onclick = () => { mostrarTab(b.dataset.tab); scrollTo({ top: document.querySelector(".picker").offsetTop, behavior: "smooth" }); };
+  });
+  addEventListener("hashchange", () => mostrarTab(location.hash.slice(1)));
+
   renderChips();
-  renderTodo();
+  renderHero();
+  if (window.Explorar) await Explorar.init();
+  mostrarTab(location.hash.slice(1) || "historia");
 
   // Cambios de tema (claro/oscuro) y de tamaño
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderTodo);

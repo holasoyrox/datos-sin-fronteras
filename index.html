@@ -8,10 +8,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Librerías guardadas en el repo para que el sitio ande sin internet -->
+<script src="vendor/vega.min.js"></script>
+<script src="vendor/vega-lite.min.js"></script>
+<script src="vendor/vega-embed.min.js"></script>
+<script src="vendor/qrcode.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,16 +28,24 @@
   </div>
 </header>
 
-<nav class="picker" aria-label="Elegir país">
+<nav class="picker" aria-label="Navegación">
   <div class="wrap picker-inner">
-    <label for="pais">Elegí un país</label>
-    <select id="pais"></select>
-    <span class="picker-hint">o tocá uno en el mapa</span>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="historia" aria-selected="true">La historia</button>
+      <button role="tab" data-tab="explorar" aria-selected="false">Explorá otros temas</button>
+      <button role="tab" data-tab="como" aria-selected="false">Cómo se hizo</button>
+    </div>
+    <div class="pais-box">
+      <label for="pais">País</label>
+      <select id="pais"></select>
+    </div>
     <button id="feria-on" class="feria-btn" title="Mapa en pantalla completa y en loop, para la pantalla de la mesa">⛶ Modo feria</button>
   </div>
 </nav>
 
 <main class="wrap">
+
+<div class="tab" id="tab-historia" role="tabpanel">
 
   <section id="mundo">
     <div class="feria-head feria-only">
@@ -103,10 +112,114 @@
     </details>
   </section>
 
-  <section id="como" class="como">
-    <p class="step">6 · Cómo se hace</p>
+  <section class="siguiente">
+    <p class="intro">La obesidad es solo un caso. El Banco Mundial tiene más de 160 bases de datos y miles de indicadores, y el mismo código sirve para cualquiera.</p>
+    <div class="siguiente-links">
+      <a href="#explorar" class="cta">Explorá otros temas →</a>
+      <a href="#como" class="cta cta-2">Mirá cómo se hizo →</a>
+    </div>
+  </section>
+
+</div>
+
+<!-- ================= Explorá otros temas ================= -->
+<div class="tab" id="tab-explorar" role="tabpanel" hidden>
+
+  <section>
+    <p class="step">1 · Elegí un tema</p>
+    <h2>El mismo código, cualquier indicador</h2>
+    <p class="intro">Cada ficha es un indicador del Banco Mundial; la línea muestra el promedio mundial desde 1990. Si no está el que buscás, buscalo en el catálogo.</p>
+    <div class="cards" id="x-cards"></div>
+    <form class="buscar" id="x-buscar">
+      <label for="x-q">Buscar en el catálogo (en inglés)</label>
+      <div class="buscar-row">
+        <input id="x-q" type="search" placeholder="ej.: literacy, tuberculosis, women in parliament" autocomplete="off">
+        <button type="submit">Buscar</button>
+      </div>
+      <div id="x-resultados" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <section>
+    <p class="step">2 · Miralo</p>
+    <div class="x-head">
+      <div>
+        <h2 id="x-nombre"></h2>
+        <p class="intro" id="x-desc"></p>
+      </div>
+      <button id="x-juego" class="feria-btn" aria-pressed="false" title="Adiviná el valor antes de verlo">🎯 Modo juego</button>
+    </div>
+    <div class="map-controls">
+      <button id="x-play" class="play" aria-label="Reproducir">▶</button>
+      <input id="x-anio" type="range" step="1" aria-label="Año">
+      <output id="x-anio-label" for="x-anio"></output>
+    </div>
+    <div class="x-grid">
+      <div id="x-mapa" class="viz viz-map"></div>
+      <aside class="x-side" id="x-side" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section>
+    <p class="step">3 · La película</p>
+    <h2 id="x-titulo-linea"></h2>
+    <div class="legend" id="x-legend-linea"></div>
+    <div id="x-linea" class="viz"></div>
+  </section>
+
+  <section>
+    <p class="step">4 · Ranking</p>
+    <div class="toggle" id="x-rank-modo" role="group" aria-label="Tipo de ranking">
+      <button data-m="top" class="on">Más altos</button>
+      <button data-m="bottom">Más bajos</button>
+      <button data-m="up">Más subieron</button>
+      <button data-m="down">Más bajaron</button>
+    </div>
+    <p class="intro" id="x-rank-sub"></p>
+    <div id="x-rank" class="viz"></div>
+  </section>
+
+  <section>
+    <p class="step">5 · Cruzalo con otro indicador</p>
+    <div class="cruce-row">
+      <label for="x-cruce">Eje horizontal:</label>
+      <select id="x-cruce"></select>
+    </div>
+    <p class="intro">Cada círculo es un país; el tamaño indica la población.</p>
+    <div class="legend" id="x-legend-cruce"></div>
+    <div id="x-cruce-viz" class="viz"></div>
+  </section>
+
+</div>
+
+<!-- ================= Cómo se hizo ================= -->
+<div class="tab" id="tab-como" role="tabpanel" hidden>
+
+  <section>
+    <p class="step">Cómo se hizo</p>
+    <h2>Del pedido a la API al gráfico</h2>
+    <p class="intro">El mismo dato recorre varios caminos: la API del Banco Mundial, un notebook de Python, este sitio y QGIS.</p>
+    <ol class="pipeline">
+      <li><b>API Data360</b><span>el Banco Mundial publica los datos</span></li>
+      <li><b>Python</b><span>los bajamos, filtramos y promediamos</span></li>
+      <li><b>JSON</b><span>quedan guardados en el repo</span></li>
+      <li><b>Vega-Lite</b><span>este sitio los dibuja en el navegador</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="step">A · La API</p>
+    <h2>Un pedido, una respuesta</h2>
+    <p class="intro">Cada indicador tiene un código. Con la base, el código y el país se piden los datos. Este es el pedido del tema y el país que elegiste:</p>
+    <pre><code id="api-req"></code></pre>
+    <pre class="api-res"><code id="api-res"></code></pre>
+    <p><a id="api-link" target="_blank" rel="noopener">Abrir este pedido en el navegador ↗</a></p>
+  </section>
+
+  <section class="como">
+    <p class="step">B · Python</p>
     <h2>Esto sirve para cualquier tema</h2>
-    <p class="intro">La base de datos del Banco Mundial tiene más de 160 bases y miles de indicadores. Lo que hicimos con obesidad se repite igual con cualquier otro tema: cambiás una palabra y obtenés otra historia.</p>
+    <p class="intro">Lo que hicimos con obesidad se repite igual con cualquier otro tema: cambiás una palabra y obtenés otra historia.</p>
 
     <div class="chips" id="chips" role="group" aria-label="Probar otro tema">
       <span class="chips-label">Probá con:</span>
@@ -136,25 +249,57 @@ alt.Chart(df).mark_line().encode(
       </li>
     </ol>
 
+  </section>
+
+  <section>
+    <p class="step">C · QGIS</p>
+    <h2>El mismo dato, otra herramienta</h2>
+    <div class="qgis">
+      <ol class="qgis-pasos">
+        <li>Exportamos la serie de obesidad a CSV, con código ISO3, año y fecha.</li>
+        <li>La unimos a la capa de países por código ISO3.</li>
+        <li>Le aplicamos una simbología graduada.</li>
+        <li>Con el controlador temporal exportamos un mapa por año.</li>
+      </ol>
+      <figure>
+        <img id="q-img" src="assets/qgis/2022.jpg" alt="Mapa de obesidad hecho en QGIS" width="760" height="362">
+        <div class="map-controls">
+          <button id="q-play" class="play" aria-label="Reproducir mapas de QGIS">▶</button>
+          <input id="q-anio" type="range" min="1990" max="2022" step="1" value="2022" aria-label="Año del mapa QGIS">
+          <output id="q-anio-label" for="q-anio">2022</output>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <p class="step">D · Observable</p>
+    <h2>Y en Observable</h2>
+    <p class="intro">Los notebooks de Observable del profesor Ariel Aizemberg exploran la misma API con JavaScript, directamente en el navegador.</p>
     <div class="recursos">
-      <a href="https://github.com/holasoyrox/datos-sin-fronteras/blob/main/notebooks/TP_Final_InfoVis.ipynb">Notebook en Python ↗</a>
-      <a href="https://observablehq.com/@aaizemberg/explorando-la-api-del-world-bank">Explorando la API en Observable ↗</a>
-      <a href="https://observablehq.com/@aaizemberg/world-bank-data-map">Mapa del Banco Mundial en Observable ↗</a>
+      <a href="https://observablehq.com/@aaizemberg/explorando-la-api-del-world-bank">Explorando la API del World Bank ↗</a>
+      <a href="https://observablehq.com/@aaizemberg/world-bank-data-map">World Bank data map ↗</a>
+      <a href="https://github.com/holasoyrox/datos-sin-fronteras/blob/main/notebooks/TP_Final_InfoVis.ipynb">Nuestro notebook en Python ↗</a>
+      <a href="https://github.com/holasoyrox/datos-sin-fronteras">El código de este sitio ↗</a>
       <a href="https://data360.worldbank.org/">World Bank Data360 ↗</a>
     </div>
   </section>
+
+</div>
 
 </main>
 
 <footer>
   <div class="wrap">
-    <p><strong>Fuente:</strong> Banco Mundial, Data360. Indicador <code>WB_HCP_OBESITY</code> (prevalencia de obesidad en adultos, %), PBI per cápita en US$ corrientes (<code>WB_GS_NY_GDP_PCAP_CD</code>) y población total (<code>WB_WDI_SP_POP_TOTL</code>).</p>
+    <p><strong>Fuente:</strong> Banco Mundial, Data360 (bases WB_HCP y WB_WDI) y API v2 para regiones y nombres de países. Obesidad: <code>WB_HCP_OBESITY</code> (prevalencia de obesidad en adultos, %); PBI per cápita: <code>WB_WDI_NY_GDP_PCAP_CD</code>; población: <code>WB_WDI_SP_POP_TOTL</code>. Mapa base: Natural Earth.</p>
     <p><strong>Método:</strong> los promedios regionales y mundiales están ponderados por población. Las regiones son las del Banco Mundial.</p>
     <p><strong>Equipo:</strong> Paula Farias y Rocío Sanchez Faris. <strong>Profesor:</strong> Ariel Aizemberg.</p>
-    <p>Trabajo final de la materia Visualización de la Información. <a href="https://github.com/holasoyrox/datos-sin-fronteras">Código en GitHub</a>.</p>
+    <p>Trabajo final de Visualización de la Información, Maestría en Ciencia de Datos, ITBA. <a href="https://github.com/holasoyrox/datos-sin-fronteras">Código en GitHub</a>.</p>
   </div>
 </footer>
 
+<script src="explorar.js"></script>
+<script src="como.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
