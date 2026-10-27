@@ -152,21 +152,32 @@ function clickPais(view) {
   });
 }
 
+// El mismo mapa y panel que la obesidad en "Explorá otros temas": clases fijas en rojos y,
+// al costado, el país elegido con su puesto y su comparación con la región y el mundo
 async function renderMapa() {
+  renderPanelMapa();
   const valores = D.paises.map((p) => ({ iso3: p.iso3, nombre: p.nombre, o: p.obesidad }));
-  const res = await embed("#viz-mapa", specMapa({
-    el: "#viz-mapa", valores, x0: ANIO_0, anio: +document.getElementById("anio").value,
-    domain: [0, 45], titulo: "% de adultos con obesidad", height: alturaMapa(),
+  const args = window.Explorar ? Explorar.mapaTema("obes").spec : {
+    valores, x0: ANIO_0, domain: [0, 45], titulo: "% de adultos con obesidad",
     fmt: "format(datum.valor, '.1f') + '%'", labelExpr: "datum.value >= 45 ? '45+' : datum.value",
+  };
+  const res = await embed("#viz-mapa", specMapa({
+    el: "#viz-mapa", anio: +document.getElementById("anio").value, height: alturaMapa(), ...args,
   }));
   mapaView = res.view;
   clickPais(mapaView);
+}
+
+function renderPanelMapa() {
+  document.getElementById("mapa-side").innerHTML =
+    window.Explorar ? Explorar.panel("obes", +document.getElementById("anio").value) : "";
 }
 
 function setAnio(a) {
   document.getElementById("anio").value = a;
   document.getElementById("anio-label").textContent = a;
   if (mapaView) mapaView.signal("anio", a).runAsync();
+  if (!document.body.classList.contains("feria")) renderPanelMapa();
 }
 
 let timer = null;
@@ -582,6 +593,7 @@ function setPais(iso) {
   if (tabActual === "historia" && mapaView) {
     sucias.delete("historia");
     mapaView.signal("pais", iso).runAsync();
+    renderPanelMapa();
     renderDependientes();
   } else {
     renderTab(tabActual);

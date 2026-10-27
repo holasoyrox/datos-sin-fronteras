@@ -15,7 +15,7 @@ Surge del trabajo final de Visualización de la Información (Maestría en Cienc
 Tres pestañas:
 
 **La historia:** obesidad en adultos, de lo general a lo particular
-1. El mundo: mapa animado 1990–2022 (y un *modo feria* en pantalla completa con un QR, que recorre en loop la obesidad y después todos los temas del explorador)
+1. El mundo: mapa animado 1990–2022 con el puesto del país elegido frente a su región y al mundo (y un *modo feria* en pantalla completa con un QR, que recorre en loop la obesidad y después todos los temas del explorador)
 2. Las regiones: promedios ponderados por población
 3. Ingreso y obesidad: PBI per cápita vs. obesidad
 4. Quién cambió más: los 15 países donde más subió
