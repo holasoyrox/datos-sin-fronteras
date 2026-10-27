@@ -191,6 +191,7 @@ body.feria .feria-only { display: flex; }
 .feria-head > div:first-child { flex: 1; }
 .feria-head h2 { font-size: clamp(28px, 3.4vw, 46px); }
 .feria-sub { color: var(--text-secondary); margin: 6px 0 0; }
+.feria-tema { margin: 4px 0 6px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
 .qr-box { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
 #qr { background: #fff; padding: 8px; border-radius: 8px; line-height: 0; }
 .feria-close {
@@ -270,6 +271,8 @@ body.feria .map-controls .play { display: none; }
 .x-side .big .muted { font-family: Inter, sans-serif; font-size: 18px; font-weight: 500; }
 .side-pais { margin: 0; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
 .frase { font-size: 14px; color: var(--text-secondary); margin: 4px 0 12px; }
+.puesto { font-size: 14px; margin: 2px 0 0; }
+.note.corr { font-size: 14px; color: var(--text-secondary); max-width: 760px; margin-top: 8px; }
 .veredicto { margin: 0 0 8px; font-weight: 600; }
 .barras { display: grid; gap: 6px; }
 .barra { display: grid; grid-template-columns: 96px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }

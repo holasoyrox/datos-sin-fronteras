@@ -98,15 +98,22 @@ function rampa() {
 
 function alturaMapa() {
   const w = document.getElementById("viz-mapa").clientWidth;
-  if (document.body.classList.contains("feria")) return Math.max(320, innerHeight - 240);
+  if (document.body.classList.contains("feria")) return Math.max(320, innerHeight - 300);
   return Math.min(440, Math.max(260, w * 0.46));
 }
 
 // Mapa genérico: valores = [{iso3, nombre, o: [valor por año desde x0]}]
 // fmt = expresión Vega para el tooltip (recibe datum.valor)
-function specMapa({ el, valores, x0, anio, domain, log = false, titulo, fmt, labelExpr, height }) {
+function specMapa({ el, valores, x0, anio, domain, log = false, titulo, fmt, labelExpr, height, umbrales, paleta, formatoLeyenda }) {
   const c = C();
   const ancho = document.querySelector(el).clientWidth;
+  // Con umbrales (clases fijas para todos los años) cada tema usa su propia paleta
+  const escala = umbrales
+    ? { type: "threshold", domain: umbrales, range: oscuro() ? paleta.slice().reverse() : paleta }
+    : { type: log ? "log" : "linear", domain, range: rampa(), clamp: true };
+  const leyenda = umbrales
+    ? { title: titulo, orient: "bottom-left", direction: "horizontal", format: formatoLeyenda, symbolType: "square", columns: 8 }
+    : { title: titulo, direction: "horizontal", orient: ancho < 760 ? "bottom" : "bottom-left", gradientLength: 220, labelExpr, tickCount: 5 };
   return {
     width: "container",
     height,
@@ -128,12 +135,8 @@ function specMapa({ el, valores, x0, anio, domain, log = false, titulo, fmt, lab
       color: {
         condition: { test: "datum.valor < 0", value: c.missing },
         field: "valor", type: "quantitative",
-        scale: { type: log ? "log" : "linear", domain, range: rampa(), clamp: true },
-        legend: {
-          title: titulo, direction: "horizontal",
-          orient: ancho < 760 ? "bottom" : "bottom-left",
-          gradientLength: 220, labelExpr, tickCount: 5,
-        },
+        scale: escala,
+        legend: leyenda,
       },
       stroke: { condition: { test: "datum.iso3 === pais", value: c.text }, value: c.surface },
       strokeWidth: { condition: { test: "datum.iso3 === pais", value: 2 }, value: 0.5 },
@@ -189,9 +192,43 @@ function togglePlay() {
 const URL_SITIO = "https://holasoyrox.github.io/datos-sin-fronteras/";
 let feriaTimer = null;
 
+// Orden de los temas en la vitrina: primero la historia (obesidad), después el resto del explorador
+let feriaTemas = [];
+let feriaIdx = 0;
+
+function tituloFeria(texto, sub) {
+  document.getElementById("feria-titulo").textContent = texto;
+  document.getElementById("feria-tema").textContent = sub;
+}
+
+function rangoSlider(y0, y1) {
+  const s = document.getElementById("anio");
+  s.min = y0; s.max = y1;
+}
+
+async function mapaFeria() {
+  const k = feriaTemas[feriaIdx];
+  if (k === "obes" || !window.Explorar) rangoSlider(ANIO_0, ANIO_N);
+  if (k === "obes" || !window.Explorar) {
+    tituloFeria(`% de adultos con obesidad, ${ANIO_0}–${ANIO_N}`, "Nuestro caso de estudio");
+    await renderMapa();
+    return [ANIO_0, ANIO_N];
+  }
+  const m = Explorar.mapaTema(k);
+  rangoSlider(m.y0, m.y1);
+  tituloFeria(`${m.nombre} (${m.unidad}), ${m.y0}–${m.y1}`,
+    `Tema ${feriaIdx + 1} de ${feriaTemas.length} · el mismo código, otro indicador`);
+  const res = await embed("#viz-mapa", specMapa({ el: "#viz-mapa", anio: m.y0, height: alturaMapa(), ...m.spec }));
+  mapaView = res.view;
+  clickPais(mapaView);
+  return [m.y0, m.y1];
+}
+
 function entrarFeria() {
   if (timer) togglePlay();
   mostrarTab("historia");
+  feriaTemas = ["obes"].concat(window.Explorar ? Explorar.claves().filter((k) => k !== "obes") : []);
+  feriaIdx = 0;
   document.body.classList.add("feria");
   const qr = document.getElementById("qr");
   if (!qr.hasChildNodes() && window.QRCode) {
@@ -199,14 +236,21 @@ function entrarFeria() {
   }
   if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
   scrollTo(0, 0);
-  renderMapa().then(() => {
-    let a = ANIO_0;
-    let pausa = 0;
+  let a0 = ANIO_0, a1 = ANIO_N, a = ANIO_0, pausa = 0, cargando = false;
+  mapaFeria().then(([y0, y1]) => {
+    a0 = y0; a1 = y1; a = y0;
     setAnio(a);
-    feriaTimer = setInterval(() => {
-      if (a >= ANIO_N) {          // se queda unos segundos en 2022 y vuelve a empezar
+    feriaTimer = setInterval(async () => {
+      if (cargando) return;
+      if (a >= a1) {               // se queda unos segundos en el último año y pasa al tema siguiente
         if (++pausa < 12) return;
-        pausa = 0; a = ANIO_0 - 1;
+        pausa = 0;
+        cargando = true;
+        feriaIdx = (feriaIdx + 1) % feriaTemas.length;
+        [a0, a1] = await mapaFeria();
+        a = a0; setAnio(a);
+        cargando = false;
+        return;
       }
       setAnio(++a);
     }, 250);
@@ -215,6 +259,8 @@ function entrarFeria() {
 
 function salirFeria() {
   clearInterval(feriaTimer); feriaTimer = null;
+  feriaIdx = 0;
+  rangoSlider(ANIO_0, ANIO_N);
   document.body.classList.remove("feria");
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   setAnio(ANIO_N);
@@ -451,7 +497,7 @@ const TEMAS = [
   { label: "Mortalidad infantil", q: "infant mortality rate", id: "WB_WDI_SP_DYN_IMRT_IN", db: "WB_WDI" },
   { label: "Desnutrición", q: "prevalence of undernourishment", id: "WB_WDI_SN_ITK_DEFC_ZS", db: "WB_WDI" },
   { label: "Esperanza de vida", q: "life expectancy at birth", id: "WB_WDI_SP_DYN_LE00_IN", db: "WB_WDI" },
-  { label: "Emisiones de CO₂", q: "CO2 emissions metric tons per capita", id: "WB_ESG_EN_ATM_CO2E_PC", db: "WB_ESG" },
+  { label: "Emisiones de CO₂", q: "CO2 emissions per capita", id: "WB_WDI_EN_GHG_CO2_PC_CE_AR5", db: "WB_WDI" },
 ];
 
 function renderCodigo(t) {

@@ -6,6 +6,27 @@ const Explorar = (() => {
   const API = "https://data360api.worldbank.org";
 
   // Textos de cada tema (los datos vienen de data/indicadores.json)
+  // Paletas de ColorBrewer (7 clases), una por tema
+  const PALETAS = {
+    Reds: ["#fee5d9", "#fcbba1", "#fc9272", "#fb6a4a", "#ef3b2c", "#cb181d", "#99000d"],
+    BuGn: ["#edf8fb", "#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#005824"],
+    OrRd: ["#fef0d9", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#990000"],
+    Oranges: ["#feedde", "#fdd0a2", "#fdae6b", "#fd8d3c", "#f16913", "#d94801", "#8c2d04"],
+    YlGn: ["#ffffcc", "#d9f0a3", "#addd8e", "#78c679", "#41ab5d", "#238443", "#005a32"],
+    Purples: ["#f2f0f7", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#4a1486"],
+    YlOrRd: ["#ffffb2", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#b10026"],
+    BuPu: ["#edf8fb", "#bfd3e6", "#9ebcda", "#8c96c6", "#8c6bb1", "#88419d", "#6e016b"],
+    Greens: ["#edf8e9", "#c7e9c0", "#a1d99b", "#74c476", "#41ab5d", "#238b45", "#005a32"],
+    PuRd: ["#f1eef6", "#d4b9da", "#c994c7", "#df65b0", "#e7298a", "#ce1256", "#91003f"],
+    Blues: ["#eff3ff", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#084594"],
+    YlOrBr: ["#ffffd4", "#fee391", "#fec44f", "#fe9929", "#ec7014", "#cc4c02", "#8c2d04"],
+    RdPu: ["#feebe2", "#fcc5c0", "#fa9fb5", "#f768a1", "#dd3497", "#ae017e", "#7a0177"],
+  };
+  const PALETA_TEMA = {
+    obes: "Reds", life: "BuGn", imrt: "OrRd", undn: "Oranges", gdp: "YlGn", net: "Purples", elec: "YlOrRd",
+    co2: "BuPu", forest: "Greens", fert: "PuRd", urb: "Blues", unemp: "YlOrBr", health: "RdPu",
+  };
+
   const META = [
     { k: "obes", nombre: "Obesidad en adultos", unidad: "% de adultos", sfx: "%", dec: 1,
       desc: "Personas de 18 años o más con un índice de masa corporal de 30 o más." },
@@ -79,6 +100,9 @@ const Explorar = (() => {
     todos.sort((a, b) => a - b);
     const q = (p) => todos[Math.min(todos.length - 1, Math.floor(p * todos.length))];
     t.dominio = [q(0.02), q(0.98)];
+    // 7 clases con la misma cantidad de datos (cuantiles de todos los años), fijas al animar
+    t.umbrales = [1, 2, 3, 4, 5, 6].map((i) => q(i / 7)).filter((v, i, a) => i === 0 || v > a[i - 1]);
+    t.paleta = PALETAS[PALETA_TEMA[t.k] || "Blues"].slice(0, t.umbrales.length + 1);
     t.cache = {};
   }
 
@@ -114,7 +138,7 @@ const Explorar = (() => {
     const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
     const d = pts.map(([x, y], i) =>
       `${i ? "L" : "M"}${((x - x0) / (x1 - x0 || 1) * 100).toFixed(1)},${(28 - (y - y0) / (y1 - y0 || 1) * 24).toFixed(1)}`).join("");
-    return `<svg viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="${d}"/></svg>`;
+    return `<svg viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" style="stroke:${t.paleta[t.paleta.length - 2]}"/></svg>`;
   }
 
   function renderCards() {
@@ -132,14 +156,22 @@ const Explorar = (() => {
 
   // ---------- 2. Mapa + panel ----------
 
+  // Lo que necesita specMapa para dibujar un tema (lo usa también el modo feria)
+  function argsMapa(t) {
+    return {
+      valores: Object.entries(t.data).map(([iso, o]) => ({ iso3: iso, nombre: PAISES[iso]?.nombre, o })),
+      x0: A0, domain: t.dominio, log: !!t.log, titulo: t.unidad,
+      fmt: `'${t.pre || ""}' + format(datum.valor, '${d3fmt(t)}') + '${(t.sfx || "").replace(/'/g, "")}'`,
+      umbrales: t.umbrales, paleta: t.paleta,
+      formatoLeyenda: t.log ? "~s" : t.dominio[1] < 10 ? ",.1f" : ",.0f",
+    };
+  }
+
   async function renderMapa() {
     const t = T();
-    const valores = Object.entries(t.data).map(([iso, o]) => ({ iso3: iso, nombre: PAISES[iso]?.nombre, o }));
     const res = await embed("#x-mapa", specMapa({
-      el: "#x-mapa", valores, x0: A0, anio: S.anio, domain: t.dominio, log: !!t.log,
-      titulo: t.unidad, height: Math.min(400, Math.max(240, $("x-mapa").clientWidth * 0.5)),
-      fmt: `'${t.pre || ""}' + format(datum.valor, '${d3fmt(t)}') + '${(t.sfx || "").replace(/'/g, "")}'`,
-      labelExpr: t.log ? "format(datum.value, '~s')" : `format(datum.value, '${t.dominio[1] < 10 ? ",.1f" : ",.0f"}')`,
+      el: "#x-mapa", anio: S.anio, height: Math.min(400, Math.max(240, $("x-mapa").clientWidth * 0.5)),
+      ...argsMapa(t),
     }));
     mapaView = res.view;
     clickPais(mapaView);
@@ -189,6 +221,13 @@ const Explorar = (() => {
       cmp(v, r) && `${p.nombre} está ${cmp(v, r)} promedio de ${corto(p.region)} (${fmt(t, r)})`,
       cmp(v, w) && `${cmp(v, w)} promedio mundial (${fmt(t, w)})`,
     ].filter(Boolean).join(" y ") + ".";
+    // Puesto en el ranking del año (de mayor a menor)
+    let puesto = "";
+    if (v != null) {
+      const vals = Object.keys(t.data).filter((iso) => PAISES[iso]).map((iso) => val(t, iso, S.anio)).filter((x) => x != null);
+      const pos = vals.filter((x) => x > v).length + 1;
+      puesto = `<p class="puesto">Puesto <b>${pos}</b> de ${vals.length} países en ${S.anio} (de mayor a menor).</p>`;
+    }
 
     const filas = [[p.nombre, v, c.pais], [corto(p.region), r, c.region], ["Mundo", w, c.mundo]];
     const max = Math.max(...filas.map((f) => Math.abs(f[1] || 0))) || 1;
@@ -196,6 +235,7 @@ const Explorar = (() => {
       ${veredicto}
       <p class="side-pais">${p.nombre} · ${S.anio}</p>
       <div class="big">${v == null ? `<span class="muted">Sin dato en ${S.anio}</span>` : fmt(t, v)}</div>
+      ${puesto}
       <p class="frase">${frase}</p>
       <div class="barras">
         ${filas.map(([n, x, col]) => `<div class="barra"><span>${n}</span>
@@ -319,6 +359,7 @@ const Explorar = (() => {
         orden: { pais: 3, region: 2, otro: 1 }[grupo], tx: fmt(tx, x), ty: fmt(t, y) };
     }).filter(Boolean);
     legend("x-legend-cruce", [[p.nombre, c.pais, "dot"], [corto(p.region), c.region, "dot"], ["Resto del mundo", c.otro, "dot"]]);
+    renderCorrelacion(data, tx, t);
     const x = { field: "x", type: "quantitative", title: `${tx.nombre} (${tx.unidad}${tx.log ? ", escala log" : ""})`,
       scale: { type: tx.log ? "log" : "linear", zero: false, nice: true } };
     const y = { field: "y", type: "quantitative", title: `${t.nombre} (${t.unidad})`,
@@ -350,6 +391,23 @@ const Explorar = (() => {
         },
       ],
     });
+  }
+
+  // Correlación de Pearson (en escala log si el eje es logarítmico)
+  function renderCorrelacion(data, tx, ty) {
+    const el = $("x-corr");
+    if (!el) return;
+    if (data.length < 10) { el.textContent = ""; return; }
+    const xs = data.map((d) => (tx.log ? Math.log(d.x) : d.x));
+    const ys = data.map((d) => (ty.log ? Math.log(d.y) : d.y));
+    const mx = xs.reduce((a, b) => a + b, 0) / xs.length;
+    const my = ys.reduce((a, b) => a + b, 0) / ys.length;
+    let sxy = 0, sxx = 0, syy = 0;
+    xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) ** 2; syy += (ys[i] - my) ** 2; });
+    const r = sxy / Math.sqrt(sxx * syy);
+    const fuerza = Math.abs(r) > 0.6 ? "una relación fuerte" : Math.abs(r) > 0.3 ? "una relación moderada, con mucha dispersión" : "una relación débil";
+    const sentido = Math.abs(r) <= 0.3 ? "" : r > 0 ? " (cuando uno sube, el otro tiende a subir)" : " (cuando uno sube, el otro tiende a bajar)";
+    el.innerHTML = `Correlación${tx.log || ty.log ? " (en escala log)" : ""}: <b>${r.toLocaleString("es-AR", { maximumFractionDigits: 2 })}</b> con ${data.length} países: ${fuerza}${sentido}. Que dos cosas se muevan juntas no quiere decir que una cause la otra.`;
   }
 
   // ---------- Estado ----------
@@ -527,6 +585,8 @@ const Explorar = (() => {
     init, render,
     tienePais: (iso) => !!(PAISES && PAISES[iso]),
     temaActual: () => T(),
+    claves: () => Object.keys(TEMAS),
+    mapaTema: (k) => { const t = TEMAS[k]; return { nombre: t.nombre, unidad: t.unidad, y0: t.y0, y1: t.y1, spec: argsMapa(t) }; },
     valor: (iso, anio) => val(T(), iso, anio),
   };
 })();
