@@ -200,6 +200,8 @@ body.feria .feria-only { display: flex; }
 }
 body.feria .map-controls output { font-size: clamp(40px, 5vw, 72px); min-width: 160px; }
 body.feria .map-controls .play { display: none; }
+body.feria #mundo .x-grid { grid-template-columns: minmax(0, 1fr); }
+body.feria #mapa-side { display: none; }
 
 /* ---------- Pestañas ---------- */
 .tabs { display: flex; gap: 2px; background: var(--surface-2); border-radius: 999px; padding: 3px; }

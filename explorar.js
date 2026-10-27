@@ -184,12 +184,10 @@ const Explorar = (() => {
   }
 
   function renderSide() {
-    const t = T(), c = C();
+    const t = T();
     const p = PAISES[pais];
     if (!p) { $("x-side").innerHTML = ""; return; }
     const v = val(t, pais, S.anio);
-    const r = promedio(t, p.region, S.anio);
-    const w = promedio(t, null, S.anio);
     const key = `${S.k}|${pais}|${S.anio}`;
 
     if (S.juego && v != null && !(key in S.adivinados)) {
@@ -217,6 +215,18 @@ const Explorar = (() => {
       veredicto = `<p class="veredicto">${txt} Dijiste ${fmt(t, g)}.</p>`;
     }
 
+    $("x-side").innerHTML = veredicto + htmlPanel(t, S.anio);
+  }
+
+  // Panel del país elegido: valor, puesto y comparación con su región y el mundo (lo usa también la historia)
+  function htmlPanel(t, anio) {
+    const c = C();
+    const p = PAISES[pais];
+    if (!p) return "";
+    const v = val(t, pais, anio);
+    const r = promedio(t, p.region, anio);
+    const w = promedio(t, null, anio);
+
     const frase = v == null ? "" : [
       cmp(v, r) && `${p.nombre} está ${cmp(v, r)} promedio de ${corto(p.region)} (${fmt(t, r)})`,
       cmp(v, w) && `${cmp(v, w)} promedio mundial (${fmt(t, w)})`,
@@ -224,17 +234,16 @@ const Explorar = (() => {
     // Puesto en el ranking del año (de mayor a menor)
     let puesto = "";
     if (v != null) {
-      const vals = Object.keys(t.data).filter((iso) => PAISES[iso]).map((iso) => val(t, iso, S.anio)).filter((x) => x != null);
+      const vals = Object.keys(t.data).filter((iso) => PAISES[iso]).map((iso) => val(t, iso, anio)).filter((x) => x != null);
       const pos = vals.filter((x) => x > v).length + 1;
-      puesto = `<p class="puesto">Puesto <b>${pos}</b> de ${vals.length} países en ${S.anio} (de mayor a menor).</p>`;
+      puesto = `<p class="puesto">Puesto <b>${pos}</b> de ${vals.length} países en ${anio} (de mayor a menor).</p>`;
     }
 
     const filas = [[p.nombre, v, c.pais], [corto(p.region), r, c.region], ["Mundo", w, c.mundo]];
     const max = Math.max(...filas.map((f) => Math.abs(f[1] || 0))) || 1;
-    $("x-side").innerHTML = `
-      ${veredicto}
-      <p class="side-pais">${p.nombre} · ${S.anio}</p>
-      <div class="big">${v == null ? `<span class="muted">Sin dato en ${S.anio}</span>` : fmt(t, v)}</div>
+    return `
+      <p class="side-pais">${p.nombre} · ${anio}</p>
+      <div class="big">${v == null ? `<span class="muted">Sin dato en ${anio}</span>` : fmt(t, v)}</div>
       ${puesto}
       <p class="frase">${frase}</p>
       <div class="barras">
@@ -587,6 +596,7 @@ const Explorar = (() => {
     temaActual: () => T(),
     claves: () => Object.keys(TEMAS),
     mapaTema: (k) => { const t = TEMAS[k]; return { nombre: t.nombre, unidad: t.unidad, y0: t.y0, y1: t.y1, spec: argsMapa(t) }; },
+    panel: (k, anio) => (TEMAS[k] ? htmlPanel(TEMAS[k], anio) : ""),
     valor: (iso, anio) => val(T(), iso, anio),
   };
 })();

@@ -63,13 +63,16 @@
     </div>
     <p class="step">1 · El mundo</p>
     <h2>La obesidad casi se triplicó en tres décadas</h2>
-    <p class="intro">Porcentaje de adultos con obesidad en cada país. Mové el año o tocá ▶ para ver la película completa.</p>
+    <p class="intro">Porcentaje de adultos con obesidad en cada país. Mové el año o tocá ▶ para ver la película completa. Tocá un país para ver su puesto y compararlo con su región y el mundo.</p>
     <div class="map-controls">
       <button id="play" class="play" aria-label="Reproducir">▶</button>
       <input id="anio" type="range" min="1990" max="2022" step="1" value="2022" aria-label="Año">
       <output id="anio-label" for="anio">2022</output>
     </div>
-    <div id="viz-mapa" class="viz viz-map"></div>
+    <div class="x-grid">
+      <div id="viz-mapa" class="viz viz-map"></div>
+      <aside class="x-side" id="mapa-side" aria-live="polite"></aside>
+    </div>
     <p class="note">Los países muy pequeños (islas del Pacífico y el Caribe, entre otros) no se ven en este mapa, pero sí están en los gráficos de abajo.</p>
   </section>
 
