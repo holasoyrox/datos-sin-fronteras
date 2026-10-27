@@ -16,10 +16,11 @@ Tres pestañas:
 
 **La historia:** obesidad en adultos, de lo general a lo particular
 1. El mundo: mapa animado 1990–2022 con el puesto del país elegido frente a su región y al mundo (y un *modo feria* en pantalla completa con un QR, que recorre en loop la obesidad y después todos los temas del explorador)
-2. Las regiones: promedios ponderados por población
-3. Ingreso y obesidad: PBI per cápita vs. obesidad
-4. Quién cambió más: los 15 países donde más subió
-5. Un país: el detalle de cualquier país frente a su región y al mundo
+2. País por país: cada país es una bandera según su % de obesidad; solo 5 pasan el 50%. Es un gráfico de Ariel Aizemberg, hecho con Observable Plot.
+3. Las regiones: promedios ponderados por población
+4. Ingreso y obesidad: PBI per cápita vs. obesidad
+5. Quién cambió más: los 15 países donde más subió
+6. Un país: el detalle de cualquier país frente a su región y al mundo
 
 **Explorá otros temas:** el mismo código con 13 indicadores precargados (esperanza de vida, mortalidad infantil, desnutrición, CO₂, internet…), búsqueda en vivo en el catálogo del Banco Mundial, mapas con una paleta propia por tema, el puesto de cada país en el ranking, cruce entre indicadores con su correlación y un *modo juego* para adivinar valores.
 
@@ -38,8 +39,10 @@ data/obesidad.json              # datos de la historia
 data/indicadores.json           # 13 indicadores para el explorador (1990–2024)
 data/world.json                 # mapa del mundo (TopoJSON + códigos ISO3)
 assets/qgis/                    # mapas de obesidad exportados desde QGIS (1990–2022)
-vendor/                         # Vega, Vega-Lite, Vega-Embed y QRCode (para usar sin internet)
+vendor/                         # Vega, Vega-Lite, Vega-Embed, Observable Plot, D3 y QRCode (para usar sin internet)
+vendor/circle-flags/            # banderas redondas por código ISO3 (circle-flags, MIT)
 scripts/build_data.py           # descarga y procesa los datos de la API
+scripts/bajar_banderas.py       # descarga las banderas de los países de la historia
 notebooks/TP_Final_InfoVis.ipynb  # el notebook original del TP
 ```
 
@@ -61,3 +64,5 @@ python3 -m http.server 8000
 - [World Bank Data360 API](https://data360api.worldbank.org): `WB_HCP_OBESITY` (prevalencia de obesidad en adultos, %), `WB_WDI_NY_GDP_PCAP_CD` (PBI per cápita, US$ corrientes) y los indicadores del explorador, `WB_WDI_SP_POP_TOTL` (población total)
 - [World Bank API v2](https://api.worldbank.org/v2/country): regiones y nombres de países
 - [world-atlas](https://github.com/topojson/world-atlas): geometrías de los países (Natural Earth)
+- [circle-flags](https://github.com/HatScripts/circle-flags): banderas redondas (licencia MIT)
+- El gráfico de banderas es de [Ariel Aizemberg](https://observablehq.com/@aaizemberg), hecho en Observable

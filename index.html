@@ -12,6 +12,8 @@
 <script src="vendor/vega.min.js"></script>
 <script src="vendor/vega-lite.min.js"></script>
 <script src="vendor/vega-embed.min.js"></script>
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/plot.umd.min.js"></script>
 <script src="vendor/qrcode.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -82,8 +84,16 @@
     <p class="note">Los países muy pequeños (islas del Pacífico y el Caribe, entre otros) no se ven en este mapa, pero sí están en los gráficos de abajo.</p>
   </section>
 
+  <section id="banderas">
+    <p class="step">2 · País por país</p>
+    <h2 id="titulo-banderas">Los 5 países donde la obesidad afecta a más de la mitad de los adultos</h2>
+    <p class="intro">Cada bandera es un país en 2022: cuanto más a la derecha, más adultos con obesidad. <span id="lista-banderas"></span> Pasá el mouse por una bandera para ver de qué país es, o tocala para elegirlo.</p>
+    <div id="viz-banderas" class="viz"></div>
+    <p class="note credito">Gráfico de Ariel Aizemberg (el original está en <a href="https://observablehq.com/@aaizemberg" target="_blank" rel="noopener">Observable ↗</a>). Banderas: <a href="https://github.com/HatScripts/circle-flags" target="_blank" rel="noopener">circle-flags</a>.</p>
+  </section>
+
   <section id="regiones">
-    <p class="step">2 · Las regiones</p>
+    <p class="step">3 · Las regiones</p>
     <h2 id="titulo-regiones">Todas las regiones suben</h2>
     <p class="intro">Promedio de cada región del Banco Mundial, ponderado por población.</p>
     <div class="legend" id="legend-regiones"></div>
@@ -91,7 +101,7 @@
   </section>
 
   <section id="ingreso">
-    <p class="step">3 · Ingreso y obesidad</p>
+    <p class="step">4 · Ingreso y obesidad</p>
     <h2>Más ingreso, más obesidad… pero no siempre</h2>
     <p class="intro">Cada círculo es un país en 2022. Más a la derecha, más PBI per cápita (escala logarítmica); el tamaño indica la población.</p>
     <div class="legend" id="legend-ingreso"></div>
@@ -99,7 +109,7 @@
   </section>
 
   <section id="cambio">
-    <p class="step">4 · Quién cambió más</p>
+    <p class="step">5 · Quién cambió más</p>
     <h2>Los 15 países donde más subió</h2>
     <p class="intro">Diferencia entre 1990 y 2022, en puntos porcentuales. No es lo mismo pasar de 5% a 15% que de 25% a 35%: por eso mostramos el punto de partida y el de llegada.</p>
     <div class="toggle" role="group" aria-label="Alcance del ranking">
@@ -111,7 +121,7 @@
   </section>
 
   <section id="pais-zoom">
-    <p class="step">5 · Un país</p>
+    <p class="step">6 · Un país</p>
     <h2 id="titulo-pais"></h2>
     <div class="kpis" id="kpis"></div>
     <div class="legend" id="legend-pais"></div>
@@ -302,7 +312,7 @@ alt.Chart(df).mark_line().encode(
 
 <footer>
   <div class="wrap">
-    <p><strong>Fuente:</strong> Banco Mundial, Data360 (bases WB_HCP y WB_WDI) y API v2 para regiones y nombres de países. Obesidad: <code>WB_HCP_OBESITY</code> (prevalencia de obesidad en adultos, %); PBI per cápita: <code>WB_WDI_NY_GDP_PCAP_CD</code>; población: <code>WB_WDI_SP_POP_TOTL</code>. Mapa base: Natural Earth.</p>
+    <p><strong>Fuente:</strong> Banco Mundial, Data360 (bases WB_HCP y WB_WDI) y API v2 para regiones y nombres de países. Obesidad: <code>WB_HCP_OBESITY</code> (prevalencia de obesidad en adultos, %); PBI per cápita: <code>WB_WDI_NY_GDP_PCAP_CD</code>; población: <code>WB_WDI_SP_POP_TOTL</code>. Mapa base: Natural Earth. Banderas: circle-flags.</p>
     <p><strong>Método:</strong> los promedios regionales y mundiales están ponderados por población. Las regiones son las del Banco Mundial.</p>
     <p><strong>Equipo:</strong> Paula Farias y Rocío Sanchez Faris. <strong>Profesor:</strong> Ariel Aizemberg.</p>
     <p>Trabajo final de Visualización de la Información, Maestría en Ciencia de Datos, ITBA. <a href="https://github.com/holasoyrox/datos-sin-fronteras">Código en GitHub</a>.</p>
