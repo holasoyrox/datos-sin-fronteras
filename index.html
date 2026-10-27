@@ -39,7 +39,7 @@
       <label for="pais">País</label>
       <select id="pais"></select>
     </div>
-    <button id="feria-on" class="feria-btn" title="Mapa en pantalla completa y en loop, para la pantalla de la mesa">⛶ Modo feria</button>
+    <button id="feria-on" class="feria-btn" title="Mapa en pantalla completa, en loop por todos los temas, para la pantalla de la mesa">⛶ Modo feria</button>
   </div>
 </nav>
 
@@ -51,7 +51,8 @@
     <div class="feria-head feria-only">
       <div>
         <p class="kicker">Datos sin fronteras · Banco Mundial</p>
-        <h2>% de adultos con obesidad, 1990–2022</h2>
+        <p class="feria-tema" id="feria-tema">Nuestro caso de estudio</p>
+        <h2 id="feria-titulo">% de adultos con obesidad, 1990–2022</h2>
         <p class="feria-sub">Paula Farias y Rocío Sanchez Faris · Prof. Ariel Aizemberg</p>
       </div>
       <div class="qr-box">
@@ -188,6 +189,7 @@
     <p class="intro">Cada círculo es un país; el tamaño indica la población.</p>
     <div class="legend" id="x-legend-cruce"></div>
     <div id="x-cruce-viz" class="viz"></div>
+    <p class="note corr" id="x-corr" aria-live="polite"></p>
   </section>
 
 </div>

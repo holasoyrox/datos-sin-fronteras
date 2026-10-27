@@ -15,13 +15,13 @@ Surge del trabajo final de Visualización de la Información (Maestría en Cienc
 Tres pestañas:
 
 **La historia:** obesidad en adultos, de lo general a lo particular
-1. El mundo: mapa animado 1990–2022 (y un *modo feria* con el mapa en loop y un QR)
+1. El mundo: mapa animado 1990–2022 (y un *modo feria* en pantalla completa con un QR, que recorre en loop la obesidad y después todos los temas del explorador)
 2. Las regiones: promedios ponderados por población
 3. Ingreso y obesidad: PBI per cápita vs. obesidad
 4. Quién cambió más: los 15 países donde más subió
 5. Un país: el detalle de cualquier país frente a su región y al mundo
 
-**Explorá otros temas:** el mismo código con 13 indicadores precargados (esperanza de vida, mortalidad infantil, desnutrición, CO₂, internet…), búsqueda en vivo en el catálogo del Banco Mundial, rankings, cruce entre indicadores y un *modo juego* para adivinar valores.
+**Explorá otros temas:** el mismo código con 13 indicadores precargados (esperanza de vida, mortalidad infantil, desnutrición, CO₂, internet…), búsqueda en vivo en el catálogo del Banco Mundial, mapas con una paleta propia por tema, el puesto de cada país en el ranking, cruce entre indicadores con su correlación y un *modo juego* para adivinar valores.
 
 **Cómo se hizo:** el pedido a la API del tema elegido, el código en Python, los mapas hechos en QGIS y los notebooks de Observable del profesor.
 
