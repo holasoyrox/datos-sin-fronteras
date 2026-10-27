@@ -340,7 +340,80 @@ function specLineas(series, {
   };
 }
 
-// ---------- 2. Regiones ----------
+// ---------- 2. País por país (banderas) ----------
+// Hecho con Observable Plot, como el gráfico original de Ariel Aizemberg (Plot.dodgeY con banderas)
+
+function renderBanderas() {
+  const el = document.getElementById("viz-banderas");
+  const c = C();
+  const MITAD = 50;
+  const paises = D.paises
+    .filter((p) => p.obesidad[idx(ANIO_N)] != null)
+    .map((p) => ({ iso3: p.iso3, nombre: p.nombre, v: p.obesidad[idx(ANIO_N)] }))
+    .sort((a, b) => a.v - b.v);
+
+  const arriba = paises.filter((p) => p.v > MITAD).reverse();
+  const nombres = arriba.map((p) => `${p.nombre} (${fmt1(p.v)}%)`);
+  document.getElementById("titulo-banderas").textContent =
+    `Los ${arriba.length} países donde la obesidad afecta a más de la mitad de los adultos`;
+  document.getElementById("lista-banderas").textContent =
+    `Del otro lado de la línea del ${MITAD}% quedan ${nombres.slice(0, -1).join(", ")} y ${nombres.at(-1)}: ` +
+    "islas del Pacífico que en el mapa casi no se ven.";
+
+  const W = el.clientWidth;
+  const r = Math.max(5.5, Math.min(11, W / 100));
+  const margen = { top: 34, bottom: 44 };
+  const dodge = (opciones) => Plot.dodgeY({ x: "v", r, padding: 1, anchor: "middle", ...opciones });
+
+  const plot = (height) => Plot.plot({
+    width: W, height,
+    marginTop: margen.top, marginBottom: margen.bottom, marginLeft: r + 4, marginRight: r + 4,
+    style: { fontFamily: "Inter, system-ui, sans-serif", fontSize: "12px", color: c.text2, background: "transparent", overflow: "visible" },
+    x: {
+      domain: [0, Math.ceil(paises.at(-1).v / 10) * 10], ticks: W < 500 ? 5 : 10,
+      label: "% de adultos con obesidad (IMC de 30 o más) →", labelAnchor: "right", labelArrow: "none",
+    },
+    marks: [
+      Plot.ruleX([MITAD], { stroke: c.muted, strokeDasharray: "4 4" }),
+      Plot.text([MITAD], { x: (d) => d, frameAnchor: "bottom", dx: 6, dy: -8, textAnchor: "start", text: () => "La mitad de los adultos", fill: c.text2 }),
+      Plot.image(paises, dodge({ src: (d) => `vendor/circle-flags/${d.iso3}.svg`, title: (d) => `${d.nombre}: ${fmt1(d.v)}%` })),
+      // borde fino en todas (para las banderas claras) y anillo en el país elegido
+      Plot.dot(paises, dodge({
+        stroke: (d) => (d.iso3 === pais ? c.pais : c.muted),
+        strokeOpacity: (d) => (d.iso3 === pais ? 1 : 0.35),
+        strokeWidth: (d) => (d.iso3 === pais ? 3 : 0.75),
+      })),
+    ],
+  });
+
+  // dodgeY no sabe cuánto alto necesita: dibujamos una vez, medimos dónde quedaron las banderas y ajustamos
+  let svg = plot(400);
+  const ys = [...svg.querySelectorAll("image")].map((img) => +img.getAttribute("y"));
+  const alto = Math.max(...ys) - Math.min(...ys) + 2 * r;
+  svg = plot(Math.ceil(alto + margen.top + margen.bottom + 8));
+  el.replaceChildren(svg);
+
+  const imgs = [...svg.querySelectorAll("image")];
+  imgs.forEach((img, i) => { img.style.cursor = "pointer"; img.onclick = () => setPais(paises[i].iso3); });
+
+  // nombre del país elegido arriba del gráfico, con una línea hasta su bandera
+  const k = paises.findIndex((p) => p.iso3 === pais);
+  if (k >= 0) {
+    const x = +imgs[k].getAttribute("x") + r, y = +imgs[k].getAttribute("y");
+    const svgEl = (tag, attrs) => {
+      const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      Object.entries(attrs).forEach(([a, v]) => e.setAttribute(a, v));
+      return svg.appendChild(e);
+    };
+    if (y - 2 > margen.top - 8) svgEl("line", { class: "bees-guia", x1: x, x2: x, y1: margen.top - 8, y2: y - 2 });
+    svgEl("text", {
+      class: "bees-label", x, y: margen.top - 14,
+      "text-anchor": x < W * 0.15 ? "start" : x > W * 0.85 ? "end" : "middle",
+    }).textContent = `${paises[k].nombre} ${fmt1(paises[k].v)}%`;
+  }
+}
+
+// ---------- 3. Regiones ----------
 
 function renderRegiones() {
   const c = C();
@@ -358,7 +431,7 @@ function renderRegiones() {
   return embed("#viz-regiones", specLineas(series));
 }
 
-// ---------- 3. Ingreso vs. obesidad ----------
+// ---------- 4. Ingreso vs. obesidad ----------
 
 function renderIngreso() {
   const c = C();
@@ -411,7 +484,7 @@ function renderIngreso() {
   });
 }
 
-// ---------- 4. Quién cambió más ----------
+// ---------- 5. Quién cambió más ----------
 
 function renderCambio() {
   const c = C();
@@ -466,7 +539,7 @@ function renderCambio() {
   });
 }
 
-// ---------- 5. Un país ----------
+// ---------- 6. Un país ----------
 
 function renderPais() {
   const c = C();
@@ -501,7 +574,7 @@ function renderPais() {
   return embed("#viz-pais", specLineas(series, { height: 290 }));
 }
 
-// ---------- 6. Cómo se hace ----------
+// ---------- 7. Cómo se hace ----------
 
 const TEMAS = [
   { label: "Obesidad", q: "obesity prevalence adults", id: "WB_HCP_OBESITY", db: "WB_HCP" },
@@ -560,6 +633,7 @@ function renderChips() {
 // ---------- Estado ----------
 
 function renderDependientes() {
+  renderBanderas();
   return Promise.all([renderRegiones(), renderIngreso(), renderCambio(), renderPais()]);
 }
 

@@ -313,3 +313,12 @@ pre .c { color: var(--text-muted); }
   .tabs { overflow-x: auto; max-width: 100%; }
   .feria-btn { margin-left: 0; }
 }
+
+/* ---------- Banderas (Observable Plot) ---------- */
+#viz-banderas svg { display: block; }
+.bees-label {
+  fill: var(--text-primary); font: 600 13px Inter, system-ui, sans-serif;
+  paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round;
+}
+.bees-guia { stroke: var(--pais); stroke-width: 1.5; }
+.note.credito { margin-top: 8px; }
