@@ -1,4 +1,4 @@
-// Datos sin fronteras — gráficos con Vega-Lite
+// De la obesidad a cualquier dato del Banco Mundial — gráficos con Vega-Lite
 // Los datos se generan con scripts/build_data.py (data/obesidad.json, data/world.json)
 // Pestañas: La historia (este archivo), Explorá otros temas (explorar.js), Cómo se hizo (como.js)
 
@@ -91,8 +91,11 @@ function renderHero() {
 
 // ---------- 1. Mapa ----------
 
+// Escala "darkred" de Vega (sugerida por Ariel), sin los extremos negro y blanco.
+// En modo claro va de amarillo (poco) a bordó (mucho); en modo oscuro se invierte para que
+// los valores altos sean los más brillantes.
 function rampa() {
-  const r = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"];
+  const r = ["#f5d830", "#efb92d", "#ed9624", "#e9711f", "#da4f2a", "#b83e37", "#8c3a36"];
   return oscuro() ? r.slice().reverse() : r;
 }
 
@@ -413,7 +416,91 @@ function renderBanderas() {
   }
 }
 
-// ---------- 3. Regiones ----------
+// ---------- 3. Los países con más de la mitad de los adultos con obesidad ----------
+// Son islas del Pacífico que no están en world.json (es de baja resolución), así que van como puntos.
+
+const MITAD_OBESIDAD = 50;
+// [longitud, latitud] de cada país y de su etiqueta; "lado" = de qué lado del texto queda el punto
+const ISLAS = {
+  NRU: { lugar: [166.93, -0.53], etiqueta: [158, 7], lado: "derecha" },
+  TUV: { lugar: [179.2, -8.52], etiqueta: [167, -10], lado: "derecha" },
+  TON: { lugar: [-175.2, -21.14], etiqueta: [167, -28], lado: "derecha" },
+  WSM: { lugar: [-171.76, -13.83], etiqueta: [-160, -5], lado: "izquierda" },
+  ASM: { lugar: [-170.7, -14.28], etiqueta: [-158, -18], lado: "izquierda" },
+};
+// Mismo rojo que los valores altos de la escala darkred del mapa
+const COLOR_ISLAS = "#b83e37";
+// En pantallas angostas acortamos el nombre más largo para que las etiquetas entren
+const nombreEtiqueta = (nombre, angosto) => (angosto ? nombre.replace("Samoa Americana", "Samoa Am.") : nombre);
+
+function masDeLaMitad() {
+  return D.paises
+    .filter((p) => p.obesidad[idx(ANIO_N)] > MITAD_OBESIDAD)
+    .sort((a, b) => b.obesidad[idx(ANIO_N)] - a.obesidad[idx(ANIO_N)])
+    .map((p) => ({ ...p, v: p.obesidad[idx(ANIO_N)], v0: p.obesidad[0] }));
+}
+
+function renderPacifico() {
+  const c = C();
+  const top = masDeLaMitad().filter((p) => ISLAS[p.iso3]);
+  const angosto = document.getElementById("viz-pacifico").clientWidth < 520;
+  const puntos = top.map((p) => ({
+    iso3: p.iso3, nombre: p.nombre, elegido: p.iso3 === pais,
+    lon: ISLAS[p.iso3].lugar[0], lat: ISLAS[p.iso3].lugar[1],
+    lonE: ISLAS[p.iso3].etiqueta[0], latE: ISLAS[p.iso3].etiqueta[1], lado: ISLAS[p.iso3].lado,
+    v: p.v, txt: `${nombreEtiqueta(p.nombre, angosto)} ${fmt1(p.v)}%`, t0: `${fmt1(p.v0)}%`, t1: `${fmt1(p.v)}%`,
+  }));
+  document.getElementById("titulo-pacifico").textContent = `Las ${puntos.length} son islas del Pacífico`;
+
+  const el = document.getElementById("viz-pacifico");
+  const ancho = el.clientWidth;
+  const etiqueta = (lado) => ({
+    transform: [{ filter: `datum.lado === '${lado}'` }],
+    mark: { type: "text", align: lado === "derecha" ? "right" : "left", baseline: "middle", fontWeight: 600, fontSize: ancho < 500 ? 11 : 13 },
+    encoding: { longitude: { field: "lonE" }, latitude: { field: "latE" }, text: { field: "txt" }, color: { value: c.text } },
+  });
+  return embed("#viz-pacifico", {
+    width: "container", height: Math.round(Math.min(460, Math.max(300, ancho * 0.6))),
+    autosize: { type: "fit", contains: "padding" },
+    // Proyección centrada en el Pacífico (si no, las islas quedan partidas entre los dos bordes del mapa)
+    projection: {
+      type: "equalEarth", rotate: [-180, 0, 0],
+      fit: { type: "MultiPoint", coordinates: [[112, 22], [-128, 22], [112, -48], [-128, -48]] },
+    },
+    layer: [
+      {
+        data: { url: "data/world.json", format: { type: "topojson", feature: "countries" } },
+        mark: { type: "geoshape", fill: c.missing, stroke: c.surface, strokeWidth: 0.5 },
+      },
+      {
+        data: { values: puntos },
+        layer: [
+          { mark: { type: "rule", stroke: c.muted, strokeWidth: 1 },
+            encoding: { longitude: { field: "lon" }, latitude: { field: "lat" }, longitude2: { field: "lonE" }, latitude2: { field: "latE" } } },
+          { mark: { type: "circle", opacity: 0.9, stroke: c.surface, strokeWidth: 1.5, cursor: "pointer" },
+            encoding: {
+              longitude: { field: "lon" }, latitude: { field: "lat" },
+              size: { field: "v", type: "quantitative", scale: { domain: [50, 80], range: [180, 700] }, legend: null },
+              color: { value: COLOR_ISLAS },
+              tooltip: [{ field: "nombre", title: "País" }, { field: "t0", title: `Obesidad ${ANIO_0}` }, { field: "t1", title: `Obesidad ${ANIO_N}` }],
+            } },
+          { transform: [{ filter: "datum.elegido" }],
+            mark: { type: "circle", size: 1100, fillOpacity: 0, stroke: c.pais, strokeWidth: 2.5 },
+            encoding: { longitude: { field: "lon" }, latitude: { field: "lat" } } },
+          etiqueta("derecha"),
+          etiqueta("izquierda"),
+        ],
+      },
+    ],
+  }).then((res) => {
+    res.view.addEventListener("click", (_, item) => {
+      const iso = item && item.datum && item.datum.iso3;
+      if (iso) setPais(iso);
+    });
+  });
+}
+
+// ---------- 4. Regiones ----------
 
 function renderRegiones() {
   const c = C();
@@ -634,6 +721,7 @@ function renderChips() {
 
 function renderDependientes() {
   renderBanderas();
+  renderPacifico();
   return Promise.all([renderRegiones(), renderIngreso(), renderCambio(), renderPais()]);
 }
 

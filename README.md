@@ -1,7 +1,7 @@
-# Datos sin fronteras
+# De la obesidad a cualquier dato del Banco Mundial
 
-**Cómo tomar datos abiertos del Banco Mundial y convertirlos en una historia.**
-Caso de estudio: obesidad en adultos, 1990–2022.
+**Cómo cambió la obesidad en adultos en el mundo entre 1990 y 2022, contado con datos abiertos del Banco Mundial.**
+También muestra cómo tomar esos datos de la API y visualizarlos, y que el mismo código sirve para cualquier otro tema.
 
 Proyecto presentado en la Media Feria de [Media Party 2026](https://mediaparty.org) (Ciudad Cultural Konex, Buenos Aires).
 Surge del trabajo final de Visualización de la Información (Maestría en Ciencia de Datos, ITBA).
@@ -17,10 +17,11 @@ Tres pestañas:
 **La historia:** obesidad en adultos, de lo general a lo particular
 1. El mundo: mapa animado 1990–2022 con el puesto del país elegido frente a su región y al mundo (y un *modo feria* en pantalla completa con un QR, que recorre en loop la obesidad y después todos los temas del explorador)
 2. País por país: cada país es una bandera según su % de obesidad; solo 5 pasan el 50%. Es un gráfico de Ariel Aizemberg, hecho con Observable Plot.
-3. Las regiones: promedios ponderados por población
-4. Ingreso y obesidad: PBI per cápita vs. obesidad
-5. Quién cambió más: los 15 países donde más subió
-6. Un país: el detalle de cualquier país frente a su región y al mundo
+3. Dónde están: mapa centrado en el Pacífico con un punto en cada uno de esos 5 países (son islas que en el mapa del mundo no se ven)
+4. Las regiones: promedios ponderados por población
+5. Ingreso y obesidad: PBI per cápita vs. obesidad
+6. Quién cambió más: los 15 países donde más subió
+7. Un país: el detalle de cualquier país frente a su región y al mundo
 
 **Explorá otros temas:** el mismo código con 13 indicadores precargados (esperanza de vida, mortalidad infantil, desnutrición, CO₂, internet…), búsqueda en vivo en el catálogo del Banco Mundial, mapas con una paleta propia por tema, el puesto de cada país en el ranking, cruce entre indicadores con su correlación y un *modo juego* para adivinar valores.
 

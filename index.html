@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Datos sin fronteras</title>
-<meta name="description" content="Cómo tomar datos del Banco Mundial y visualizarlos. Caso de estudio: obesidad en adultos, 1990–2022.">
+<title>De la obesidad a cualquier dato del Banco Mundial</title>
+<meta name="description" content="Tomamos la obesidad en adultos (1990–2022) como ejemplo de cómo usar los datos abiertos del Banco Mundial, y mostramos cómo hacer lo mismo con cualquier otro indicador.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -22,9 +22,10 @@
 <header class="hero">
   <div class="wrap">
     <p class="kicker">Media Party 2026 · Feria de proyectos</p>
-    <h1>Datos sin fronteras</h1>
-    <p class="lede">Cómo tomar datos abiertos del Banco Mundial y convertirlos en una historia.
-      Caso de estudio: <strong>obesidad en adultos, 1990–2022</strong>.</p>
+    <h1>De la obesidad a cualquier dato del Banco Mundial</h1>
+    <p class="lede">Tomamos la <strong>obesidad en adultos</strong> (1990–2022) como ejemplo y mostramos
+      cómo hacer lo mismo con <strong>cualquier otro indicador</strong>.</p>
+    <p class="fuente-hero">Fuente: Banco Mundial, Data360 · indicador <code>WB_HCP_OBESITY</code> (prevalencia de obesidad en adultos)</p>
     <div class="hero-stat" id="hero-stat" aria-live="polite"></div>
     <p class="byline">Paula Farias y Rocío Sanchez Faris · Profesor: Ariel Aizemberg</p>
     <!-- Para poner una foto: cambiar las iniciales por <img src="assets/equipo/pf.jpg" alt=""> -->
@@ -58,7 +59,7 @@
   <section id="mundo">
     <div class="feria-head feria-only">
       <div>
-        <p class="kicker">Datos sin fronteras · Banco Mundial</p>
+        <p class="kicker">De la obesidad a cualquier dato del Banco Mundial</p>
         <p class="feria-tema" id="feria-tema">Nuestro caso de estudio</p>
         <h2 id="feria-titulo">% de adultos con obesidad, 1990–2022</h2>
         <p class="feria-sub">Paula Farias y Rocío Sanchez Faris · Prof. Ariel Aizemberg</p>
@@ -89,11 +90,19 @@
     <h2 id="titulo-banderas">Los 5 países donde la obesidad afecta a más de la mitad de los adultos</h2>
     <p class="intro">Cada bandera es un país en 2022: cuanto más a la derecha, más adultos con obesidad. <span id="lista-banderas"></span> Pasá el mouse por una bandera para ver de qué país es, o tocala para elegirlo.</p>
     <div id="viz-banderas" class="viz"></div>
-    <p class="note credito">Gráfico de Ariel Aizemberg (el original está en <a href="https://observablehq.com/@aaizemberg" target="_blank" rel="noopener">Observable ↗</a>). Banderas: <a href="https://github.com/HatScripts/circle-flags" target="_blank" rel="noopener">circle-flags</a>.</p>
+    <p class="note credito">Gráfico de Ariel Aizemberg (el original está en <a href="https://observablehq.com/@aaizemberg/obesity-beeswarm" target="_blank" rel="noopener">Observable ↗</a>). Banderas: <a href="https://github.com/HatScripts/circle-flags" target="_blank" rel="noopener">circle-flags</a>.</p>
+  </section>
+
+  <section id="pacifico">
+    <p class="step">3 · Dónde están</p>
+    <h2 id="titulo-pacifico">Las 5 son islas del Pacífico</h2>
+    <p class="intro">Son tan chicas que en el mapa del mundo no se llegan a ver, así que las marcamos con un punto. El tamaño del punto indica el % de adultos con obesidad en 2022. Tocá un punto para elegir ese país.</p>
+    <div id="viz-pacifico" class="viz viz-map"></div>
+    <p class="note">Samoa Americana es un territorio de Estados Unidos; el Banco Mundial publica sus datos por separado.</p>
   </section>
 
   <section id="regiones">
-    <p class="step">3 · Las regiones</p>
+    <p class="step">4 · Las regiones</p>
     <h2 id="titulo-regiones">Todas las regiones suben</h2>
     <p class="intro">Promedio de cada región del Banco Mundial, ponderado por población.</p>
     <div class="legend" id="legend-regiones"></div>
@@ -101,7 +110,7 @@
   </section>
 
   <section id="ingreso">
-    <p class="step">4 · Ingreso y obesidad</p>
+    <p class="step">5 · Ingreso y obesidad</p>
     <h2>Más ingreso, más obesidad… pero no siempre</h2>
     <p class="intro">Cada círculo es un país en 2022. Más a la derecha, más PBI per cápita (escala logarítmica); el tamaño indica la población.</p>
     <div class="legend" id="legend-ingreso"></div>
@@ -109,7 +118,7 @@
   </section>
 
   <section id="cambio">
-    <p class="step">5 · Quién cambió más</p>
+    <p class="step">6 · Quién cambió más</p>
     <h2>Los 15 países donde más subió</h2>
     <p class="intro">Diferencia entre 1990 y 2022, en puntos porcentuales. No es lo mismo pasar de 5% a 15% que de 25% a 35%: por eso mostramos el punto de partida y el de llegada.</p>
     <div class="toggle" role="group" aria-label="Alcance del ranking">
@@ -121,7 +130,7 @@
   </section>
 
   <section id="pais-zoom">
-    <p class="step">6 · Un país</p>
+    <p class="step">7 · Un país</p>
     <h2 id="titulo-pais"></h2>
     <div class="kpis" id="kpis"></div>
     <div class="legend" id="legend-pais"></div>
@@ -300,6 +309,7 @@ alt.Chart(df).mark_line().encode(
     <div class="recursos">
       <a href="https://observablehq.com/@aaizemberg/explorando-la-api-del-world-bank">Explorando la API del World Bank ↗</a>
       <a href="https://observablehq.com/@aaizemberg/world-bank-data-map">World Bank data map ↗</a>
+      <a href="https://observablehq.com/@aaizemberg/obesity-beeswarm">Obesity beeswarm ↗</a>
       <a href="https://github.com/holasoyrox/datos-sin-fronteras/blob/main/notebooks/TP_Final_InfoVis.ipynb">Nuestro notebook en Python ↗</a>
       <a href="https://github.com/holasoyrox/datos-sin-fronteras">El código de este sitio ↗</a>
       <a href="https://data360.worldbank.org/">World Bank Data360 ↗</a>

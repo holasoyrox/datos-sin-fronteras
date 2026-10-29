@@ -349,3 +349,8 @@ pre .c { color: var(--text-muted); }
 }
 .bees-guia { stroke: var(--pais); stroke-width: 1.5; }
 .note.credito { margin-top: 8px; }
+/* el título largo no tiene que pasar por debajo de los círculos del equipo */
+.hero h1 { text-wrap: balance; }
+@media (min-width: 760px) { .hero h1 { max-width: calc(100% - 190px); } }
+.fuente-hero { font-size: 13px; color: var(--text-secondary); margin: 10px 0 18px; }
+.fuente-hero code { font-size: 12px; }

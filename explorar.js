@@ -6,25 +6,19 @@ const Explorar = (() => {
   const API = "https://data360api.worldbank.org";
 
   // Textos de cada tema (los datos vienen de data/indicadores.json)
-  // Paletas de ColorBrewer (7 clases), una por tema
+  // Escalas "dark" de Vega (darkred, darkgold, darkgreen, darkblue, darkmulti), sugeridas por Ariel.
+  // 7 colores de cada una, sin los extremos negro y blanco, ordenados de poco (claro) a mucho (oscuro).
+  // En modo oscuro specMapa las invierte para que los valores altos sean los más brillantes.
   const PALETAS = {
-    Reds: ["#fee5d9", "#fcbba1", "#fc9272", "#fb6a4a", "#ef3b2c", "#cb181d", "#99000d"],
-    BuGn: ["#edf8fb", "#ccece6", "#99d8c9", "#66c2a4", "#41ae76", "#238b45", "#005824"],
-    OrRd: ["#fef0d9", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#990000"],
-    Oranges: ["#feedde", "#fdd0a2", "#fdae6b", "#fd8d3c", "#f16913", "#d94801", "#8c2d04"],
-    YlGn: ["#ffffcc", "#d9f0a3", "#addd8e", "#78c679", "#41ab5d", "#238443", "#005a32"],
-    Purples: ["#f2f0f7", "#dadaeb", "#bcbddc", "#9e9ac8", "#807dba", "#6a51a3", "#4a1486"],
-    YlOrRd: ["#ffffb2", "#fed976", "#feb24c", "#fd8d3c", "#fc4e2a", "#e31a1c", "#b10026"],
-    BuPu: ["#edf8fb", "#bfd3e6", "#9ebcda", "#8c96c6", "#8c6bb1", "#88419d", "#6e016b"],
-    Greens: ["#edf8e9", "#c7e9c0", "#a1d99b", "#74c476", "#41ab5d", "#238b45", "#005a32"],
-    PuRd: ["#f1eef6", "#d4b9da", "#c994c7", "#df65b0", "#e7298a", "#ce1256", "#91003f"],
-    Blues: ["#eff3ff", "#c6dbef", "#9ecae1", "#6baed6", "#4292c6", "#2171b5", "#084594"],
-    YlOrBr: ["#ffffd4", "#fee391", "#fec44f", "#fe9929", "#ec7014", "#cc4c02", "#8c2d04"],
-    RdPu: ["#feebe2", "#fcc5c0", "#fa9fb5", "#f768a1", "#dd3497", "#ae017e", "#7a0177"],
+    darkred: ["#f5d830", "#efb92d", "#ed9624", "#e9711f", "#da4f2a", "#b83e37", "#8c3a36"],
+    darkgold: ["#fff5a6", "#fae241", "#eec620", "#d0a524", "#ad8a2b", "#897331", "#6d5a35"],
+    darkgreen: ["#fff14f", "#dbdc34", "#abc83c", "#78b440", "#459d42", "#048643", "#076a4c"],
+    darkblue: ["#81f6fb", "#3ddff0", "#27c3df", "#06a8cf", "#008bbe", "#0371ac", "#1e588a"],
+    darkmulti: ["#fff485", "#eae30d", "#9dd03a", "#50b65a", "#239976", "#197a8c", "#1e5b88"],
   };
   const PALETA_TEMA = {
-    obes: "Reds", life: "BuGn", imrt: "OrRd", undn: "Oranges", gdp: "YlGn", net: "Purples", elec: "YlOrRd",
-    co2: "BuPu", forest: "Greens", fert: "PuRd", urb: "Blues", unemp: "YlOrBr", health: "RdPu",
+    obes: "darkred", life: "darkgreen", imrt: "darkred", undn: "darkgold", gdp: "darkgold", net: "darkblue", elec: "darkgold",
+    co2: "darkmulti", forest: "darkgreen", fert: "darkmulti", urb: "darkblue", unemp: "darkred", health: "darkmulti",
   };
 
   const META = [
@@ -102,7 +96,7 @@ const Explorar = (() => {
     t.dominio = [q(0.02), q(0.98)];
     // 7 clases con la misma cantidad de datos (cuantiles de todos los años), fijas al animar
     t.umbrales = [1, 2, 3, 4, 5, 6].map((i) => q(i / 7)).filter((v, i, a) => i === 0 || v > a[i - 1]);
-    t.paleta = PALETAS[PALETA_TEMA[t.k] || "Blues"].slice(0, t.umbrales.length + 1);
+    t.paleta = PALETAS[PALETA_TEMA[t.k] || "darkblue"].slice(0, t.umbrales.length + 1);
     t.cache = {};
   }
 
@@ -138,7 +132,7 @@ const Explorar = (() => {
     const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
     const d = pts.map(([x, y], i) =>
       `${i ? "L" : "M"}${((x - x0) / (x1 - x0 || 1) * 100).toFixed(1)},${(28 - (y - y0) / (y1 - y0 || 1) * 24).toFixed(1)}`).join("");
-    return `<svg viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" style="stroke:${t.paleta[t.paleta.length - 2]}"/></svg>`;
+    return `<svg viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" style="stroke:${t.paleta[3]}"/></svg>`;
   }
 
   function renderCards() {
