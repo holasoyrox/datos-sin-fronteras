@@ -294,6 +294,12 @@ body.feria #mapa-side { display: none; }
 .x-head .feria-btn { margin-left: 0; flex-shrink: 0; }
 .feria-btn.on { background: var(--text-primary); color: var(--bg); }
 .x-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+/* La película y el ranking, uno al lado del otro en la compu */
+.x-par { border-bottom: 1px solid var(--border); }
+@media (min-width: 960px) {
+  .x-par { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
+  .x-par > section { border-bottom: 0; }
+}
 .x-side { background: var(--surface-2); border-radius: 12px; padding: 16px; }
 .x-side h3 { margin: 4px 0; }
 .x-side .big { font-family: Fraunces, Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1.1; display: block; margin: 6px 0; }
