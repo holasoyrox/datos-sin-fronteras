@@ -206,7 +206,8 @@ function togglePlay() {
 const URL_SITIO = "https://holasoyrox.github.io/datos-sin-fronteras/";
 let feriaTimer = null;
 
-// Orden de los temas en la vitrina: primero la historia (obesidad), después el resto del explorador
+// Desde "La historia" la vitrina queda fija en obesidad; desde "Explorá otros temas" rota por todos
+// los temas (primero obesidad, después el resto del explorador)
 let feriaTemas = [];
 let feriaIdx = 0;
 
@@ -240,8 +241,9 @@ async function mapaFeria() {
 
 function entrarFeria() {
   if (timer) togglePlay();
+  const rotar = tabActual === "explorar" && window.Explorar;
   mostrarTab("historia");
-  feriaTemas = ["obes"].concat(window.Explorar ? Explorar.claves().filter((k) => k !== "obes") : []);
+  feriaTemas = rotar ? ["obes"].concat(Explorar.claves().filter((k) => k !== "obes")) : ["obes"];
   feriaIdx = 0;
   document.body.classList.add("feria");
   const qr = document.getElementById("qr");
@@ -259,6 +261,7 @@ function entrarFeria() {
       if (a >= a1) {               // se queda unos segundos en el último año y pasa al tema siguiente
         if (++pausa < 12) return;
         pausa = 0;
+        if (feriaTemas.length === 1) { a = a0; setAnio(a); return; }  // un solo tema: vuelve a empezar
         cargando = true;
         feriaIdx = (feriaIdx + 1) % feriaTemas.length;
         [a0, a1] = await mapaFeria();
