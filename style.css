@@ -294,24 +294,31 @@ body.feria #mapa-side { display: none; }
 .x-head .feria-btn { margin-left: 0; flex-shrink: 0; }
 .feria-btn.on { background: var(--text-primary); color: var(--bg); }
 .x-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
-.x-side { background: var(--surface-2); border-radius: 12px; padding: 16px; }
+/* Altura fija: las barras quedan siempre ancladas abajo, aunque cambie el texto al reproducir los años */
+.x-side {
+  background: var(--surface-2); border-radius: 12px; padding: 16px;
+  height: 370px; display: flex; flex-direction: column; overflow: hidden;
+}
 .x-side h3 { margin: 4px 0; }
-.x-side .big { font-family: Fraunces, Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1.1; display: block; margin: 6px 0; }
+.x-side .big { font-family: Fraunces, Georgia, serif; font-size: 40px; font-weight: 700; line-height: 1.1; display: block; margin: 6px 0; height: 44px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .x-side .big .muted { font-family: Inter, sans-serif; font-size: 18px; font-weight: 500; }
 .side-pais { margin: 0; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
-.frase { font-size: 14px; color: var(--text-secondary); margin: 4px 0 12px; }
+.frase {
+  font-size: 14px; line-height: 1.5; color: var(--text-secondary); margin: 4px 0 12px;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
 .puesto { font-size: 14px; margin: 2px 0 0; }
 .note.corr { font-size: 14px; color: var(--text-secondary); max-width: 760px; margin-top: 8px; }
-.veredicto { margin: 0 0 8px; font-weight: 600; }
-.barras { display: grid; gap: 6px; }
-.barra { display: grid; grid-template-columns: 96px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.veredicto { margin: 0 0 8px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barras { display: grid; gap: 6px; margin-top: auto; }
+.barra { display: grid; grid-template-columns: 118px 1fr auto; gap: 8px; align-items: center; font-size: 12.5px; }
 .barra > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
 .fill { display: block; height: 100%; border-radius: 4px; }
 .barra .v { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 #x-guess { width: 100%; accent-color: var(--pais); }
 .btn-go {
-  margin-top: 10px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 0;
+  margin-top: auto; align-self: flex-start; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 0;
   background: var(--pais); color: #fff; padding: 8px 16px; border-radius: 999px;
 }
 .cruce-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px; }
