@@ -440,10 +440,27 @@ function masDeLaMitad() {
     .map((p) => ({ ...p, v: p.obesidad[idx(ANIO_N)], v0: p.obesidad[0] }));
 }
 
+// Si el mapa se dibuja mientras está oculto (modo feria, pantalla completa, otra pestaña) mide 0px
+// y la proyección queda colapsada en un punto. Por eso no lo dibujamos oculto y lo redibujamos
+// solo cuando vuelve a tener ancho (o cambia mucho de tamaño).
+let pacificoAncho = 0;
+let pacificoObs = null;
+
 function renderPacifico() {
+  const elP = document.getElementById("viz-pacifico");
+  if (!pacificoObs && window.ResizeObserver) {
+    pacificoObs = new ResizeObserver(() => {
+      const w = elP.clientWidth;
+      if (w > 0 && Math.abs(w - pacificoAncho) > 40) renderPacifico();
+    });
+    pacificoObs.observe(elP);
+  }
+  if (elP.clientWidth < 50) { pacificoAncho = 0; return Promise.resolve(); }
+  pacificoAncho = elP.clientWidth;
+
   const c = C();
   const top = masDeLaMitad().filter((p) => ISLAS[p.iso3]);
-  const angosto = document.getElementById("viz-pacifico").clientWidth < 520;
+  const angosto = elP.clientWidth < 520;
   const puntos = top.map((p) => ({
     iso3: p.iso3, nombre: p.nombre, elegido: p.iso3 === pais,
     lon: ISLAS[p.iso3].lugar[0], lat: ISLAS[p.iso3].lugar[1],
@@ -460,8 +477,9 @@ function renderPacifico() {
     encoding: { longitude: { field: "lonE" }, latitude: { field: "latE" }, text: { field: "txt" }, color: { value: c.text } },
   });
   return embed("#viz-pacifico", {
-    width: "container", height: Math.round(Math.min(460, Math.max(300, ancho * 0.6))),
-    autosize: { type: "fit", contains: "padding" },
+    // Tamaño exacto en píxeles y sin autosize "fit": combinado con projection.fit colapsaba el mapa
+    width: ancho, height: Math.round(Math.min(460, Math.max(300, ancho * 0.6))),
+    autosize: { type: "none" }, padding: 0,
     // Proyección centrada en el Pacífico (si no, las islas quedan partidas entre los dos bordes del mapa)
     projection: {
       type: "equalEarth", rotate: [-180, 0, 0],
